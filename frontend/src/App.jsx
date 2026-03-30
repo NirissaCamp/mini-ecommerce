@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { Routes, Route } from 'react-router-dom'
+import { Routes, Route, useNavigate } from 'react-router-dom'
 import { getMe} from "./api/auth.js";
 import './App.css'
 import UserProfile from './components/UserProfile/UserProfile.jsx'
@@ -10,6 +10,7 @@ function App() {
   const [msg, setMsg] = useState('')
   const [authOpen, setAuthOpen] = useState(false)
   const [userName, setUserName] = useState(null)
+  const navigate = useNavigate()
 
   function handleLoggedIn(name) {
     if (name) {
@@ -22,6 +23,9 @@ function App() {
       localStorage.removeItem('token')
       localStorage.removeItem('username')
       setUserName(null)
+      if(location.pathname === '/profile'){
+          navigate('/', {replace:true})
+      }
   }
 
     useEffect(() => {
