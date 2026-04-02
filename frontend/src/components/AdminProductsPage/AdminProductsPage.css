@@ -1,0 +1,95 @@
+.admin-page {
+    background: #eaeded;
+    min-height: calc(100svh - 80px);
+    padding: 16px;
+}
+
+.admin-page__inner {
+    max-width: 1100px;
+    margin: 0 auto;
+}
+
+.admin-page__hint {
+    margin-top: -4px;
+    color: #555;
+}
+
+.admin-page__error {
+    margin: 10px 0 14px;
+    padding: 10px 12px;
+    background: #ffe8e8;
+    border: 1px solid #f2bcbc;
+    color: #9a1e1e;
+    border-radius: 6px;
+}
+
+.admin-card {
+    background: #fff;
+    border-radius: 8px;
+    padding: 14px 16px;
+    margin-bottom: 14px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12);
+}
+
+.admin-form {
+    display: grid;
+    gap: 10px;
+}
+
+.admin-form label {
+    display: grid;
+    gap: 6px;
+    font-weight: 600;
+}
+
+.admin-form input,
+.admin-form textarea {
+    border: 1px solid #ccc;
+    border-radius: 6px;
+    padding: 8px 10px;
+    font: inherit;
+}
+
+.admin-form__checkbox {
+    display: flex !important;
+    align-items: center;
+    gap: 8px;
+    font-weight: 500;
+}
+
+.admin-form__actions {
+    display: flex;
+    gap: 8px;
+}
+
+.admin-form button,
+.admin-table button {
+    border: 1px solid #d0d0d0;
+    border-radius: 6px;
+    padding: 6px 10px;
+    cursor: pointer;
+    background: #fff;
+}
+
+.admin-form button.secondary {
+    background: #f7f7f7;
+}
+
+.admin-table button.danger {
+    color: #b00020;
+    border-color: #e0b5bd;
+    margin-left: 8px;
+}
+
+.admin-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.admin-table th,
+.admin-table td {
+    border-bottom: 1px solid #ececec;
+    text-align: left;
+    padding: 8px;
+    font-size: 14px;
+}
