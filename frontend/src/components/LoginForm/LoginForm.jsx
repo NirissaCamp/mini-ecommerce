@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { login } from '../../api/auth.js'
+import './LoginForm.css'
 
 export default function LoginForm({ onMessage, onLoggedIn }) {
     const [username,setUsername] = useState('')
