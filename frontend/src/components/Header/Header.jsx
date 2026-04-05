@@ -2,8 +2,7 @@ import { useState, useEffect, useRef } from "react"
 import { useNavigate, Link } from 'react-router-dom'
 import './Header.css'
 
-export default function Header({ onOpenAuth, userName, onLogout, cartCount = 0 }) {
-export default function Header({ onOpenAuth, userName, isAdmin, onLogout }) {
+export default function Header({ onOpenAuth, userName, onLogout, isAdmin, cartCount = 0 }) {
     const [accountMenuOpen, setAccountMenuOpen] = useState(false)
     const accountWrapRef = useRef(null)
     const accountBtnRef = useRef(null)
