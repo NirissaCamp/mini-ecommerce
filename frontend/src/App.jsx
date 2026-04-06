@@ -9,6 +9,7 @@ import AuthModal from './components/AuthModal/AuthModal.jsx'
 import AdminProductsPage from "./components/AdminProductsPage/AdminProductsPage.jsx";
 import ProductCatalog from './components/ProductCatalog/ProductCatalog.jsx'
 import Cart from "./components/Cart/Cart.jsx";
+import RequireAdmin from './components/RequireAdmin/RequireAdmin.jsx'
 
 function App() {
   const [msg, setMsg] = useState('')
@@ -124,7 +125,11 @@ function App() {
             />
             <Route
                 path="/admin/products"
-                element={<AdminProductsPage />}
+                element={
+                    <RequireAdmin>
+                        <AdminProductsPage />
+                    </RequireAdmin>
+                }
             />
             <Route
                 path="/cart"
