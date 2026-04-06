@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { register } from '../../api/auth.js'
 
-export default function RegisterForm({ onMessage, onLoggedIn }) {
+export default function RegisterForm({ onMessage, onLoggedIn, onClose }) {
     const [username,setUsername] = useState('')
     const [password, setPassword] = useState('')
 
@@ -16,6 +16,7 @@ export default function RegisterForm({ onMessage, onLoggedIn }) {
             if (onLoggedIn) {
                 onLoggedIn(data?.username ?? username)
             }
+            onClose?.()
         }catch (err) {
             onMessage(err.message)
         }

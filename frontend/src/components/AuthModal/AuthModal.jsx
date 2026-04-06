@@ -53,7 +53,7 @@ export default function AuthModal({ open, onClose, onMessage, onLoggedIn }) {
                         <LoginForm onMessage={onMessage} onLoggedIn={onLoggedIn} />
                     )}
                     {tab === 'register' && (
-                        <RegisterForm onMessage={onMessage} onLoggedIn={onLoggedIn} />
+                        <RegisterForm onMessage={onMessage} onLoggedIn={onLoggedIn} onClose={onClose} />
                     )}
                 </div>
             </div>
