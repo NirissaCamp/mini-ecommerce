@@ -9,7 +9,8 @@ export default function RegisterForm({ onMessage, onLoggedIn, onClose }) {
         e.preventDefault()
         try {
             const data = await register({ username, password })
-            onMessage(JSON.stringify(data, null, 2))
+            // onMessage(JSON.stringify(data, null, 2))
+            onMessage('')
             if (data?.token) {
                 localStorage.setItem('token', data.token)
             }

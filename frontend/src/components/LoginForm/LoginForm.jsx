@@ -10,7 +10,8 @@ export default function LoginForm({ onMessage, onLoggedIn }) {
         e.preventDefault()
         try {
             const data = await login({ username, password })
-            onMessage(JSON.stringify(data, null, 2))
+            // onMessage(JSON.stringify(data, null, 2))
+            onMessage('')
             if (data?.token) {
                 localStorage.setItem('token', data.token)
             }
@@ -31,7 +32,10 @@ export default function LoginForm({ onMessage, onLoggedIn }) {
                         type="text"
                         placeholder="username"
                         value={username}
-                        onChange={(e) => setUsername(e.target.value)}
+                        onChange={(e) => {
+                            onMessage?.('')
+                            setUsername(e.target.value)
+                        }}
                     />
                 </div>
                 <div>
@@ -39,7 +43,10 @@ export default function LoginForm({ onMessage, onLoggedIn }) {
                         type="password"
                         placeholder="password"
                         value={password}
-                        onChange={(e) => setPassword(e.target.value)}
+                        onChange={(e) => {
+                            onMessage?.('')
+                            setPassword(e.target.value)
+                        }}
                     />
                 </div>
                 <button type="submit">登录</button>
