@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import './ProductCard.css';
+import {useNavigate} from "react-router-dom";
 
 const COLORS = [
     { bg: 'linear-gradient(135deg,#dbeafe,#bfdbfe)', text: '#1d4ed8' },
@@ -46,6 +47,7 @@ export default function ProductCard({ product, isLoggedIn, onAdd, onNeedAuth }) 
     const reviews    = getReviewCount(product.id);
     const stock      = stockInfo(product.stock);
     const outOfStock = product.stock <= 0;
+    const navigate = useNavigate();
 
     async function handleAdd() {
         if (!isLoggedIn)                       { onNeedAuth(); return; }
@@ -82,7 +84,11 @@ export default function ProductCard({ product, isLoggedIn, onAdd, onNeedAuth }) 
             </div>
 
             <div className="pc-card__body">
-                <h3 className="pc-card__name" title={product.name}>
+                <h3 className="pc-card__name"
+                    style={{cursor:'pointer'}}
+                    onClick={()=>navigate(`/products/${product.id}`)}
+                    title={product.name}
+                >
                     {product.name}
                 </h3>
 

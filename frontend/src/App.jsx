@@ -10,6 +10,7 @@ import AdminProductsPage from "./components/AdminProductsPage/AdminProductsPage.
 import ProductCatalog from './components/ProductCatalog/ProductCatalog.jsx'
 import Cart from "./components/Cart/Cart.jsx";
 import RequireAdmin from './components/RequireAdmin/RequireAdmin.jsx'
+import ProductDetail from "./components/ProductDetail/ProductDetail.jsx";
 
 function App() {
   const [msg, setMsg] = useState('')
@@ -126,6 +127,10 @@ function App() {
                         onCartUpdate={setCartCount}
                     />
                 }
+            />
+            <Route
+                path='/products/:id'
+                element={<ProductDetail/>}
             />
             <Route
                 path="/profile"

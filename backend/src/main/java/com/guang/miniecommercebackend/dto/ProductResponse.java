@@ -2,6 +2,7 @@ package com.guang.miniecommercebackend.dto;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.List;
 
 /**
  * 返回给前端的商品信息，避免直接暴露实体、也方便以后字段与表结构解耦。
@@ -14,6 +15,9 @@ public class ProductResponse {
     private Integer stock;
     private Boolean active;
     private LocalDateTime createdAt;
+    private List<ProductImageResponse> images;
+    private List<ProductBulletResponse> bullets;
+    private List<ShippingOptionResponse> shippingOptions;
 
     public ProductResponse() {
     }
@@ -84,4 +88,14 @@ public class ProductResponse {
     public void setCreatedAt(LocalDateTime createdAt) {
         this.createdAt = createdAt;
     }
+
+    public List<ProductImageResponse> getImages() { return images; }
+    public void setImages(List<ProductImageResponse> images) { this.images = images; }
+
+    public List<ProductBulletResponse> getBullets() { return bullets; }
+    public void setBullets(List<ProductBulletResponse> bullets) { this.bullets = bullets; }
+
+    public List<ShippingOptionResponse> getShippingOptions() { return shippingOptions; }
+    public void setShippingOptions(List<ShippingOptionResponse> shippingOptions) { this.shippingOptions =
+            shippingOptions; }
 }

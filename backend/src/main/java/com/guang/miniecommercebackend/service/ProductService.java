@@ -1,9 +1,15 @@
 package com.guang.miniecommercebackend.service;
 
+import com.guang.miniecommercebackend.dto.ProductImageResponse;
+import com.guang.miniecommercebackend.dto.ProductBulletResponse;
+import com.guang.miniecommercebackend.dto.ShippingOptionResponse;
 import com.guang.miniecommercebackend.dto.ProductResponse;
 import com.guang.miniecommercebackend.dto.ProductUpsertRequest;
 import com.guang.miniecommercebackend.entity.Product;
 import com.guang.miniecommercebackend.repository.ProductRepository;
+import com.guang.miniecommercebackend.repository.ProductImageRepository;
+import com.guang.miniecommercebackend.repository.ProductBulletRepository;
+import com.guang.miniecommercebackend.repository.ShippingOptionRepository;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
@@ -15,9 +21,18 @@ import java.util.List;
 public class ProductService {
 
     private final ProductRepository productRepository;
+    private final ProductImageRepository productImageRepository;
+    private final ProductBulletRepository productBulletRepository;
+    private final ShippingOptionRepository shippingOptionRepository;
 
-    public ProductService(ProductRepository productRepository) {
+    public ProductService(ProductRepository productRepository,
+                          ProductImageRepository productImageRepository,
+                          ProductBulletRepository productBulletRepository,
+                          ShippingOptionRepository shippingOptionRepository) {
         this.productRepository = productRepository;
+        this.productImageRepository = productImageRepository;
+        this.productBulletRepository = productBulletRepository;
+        this.shippingOptionRepository = shippingOptionRepository;
     }
 
     // ===== Public catalog (existing) =====
@@ -72,7 +87,7 @@ public class ProductService {
         p.setActive(req.getActive());
     }
     private ProductResponse toResponse(Product p) {
-        return new ProductResponse(
+        ProductResponse response = new ProductResponse(
                 p.getId(),
                 p.getName(),
                 p.getDescription(),
@@ -81,5 +96,40 @@ public class ProductService {
                 p.getActive(),
                 p.getCreatedAt()
         );
+        // map images
+        List<ProductImageResponse> images = productImageRepository
+                .findByProductIdOrderBySortOrderAsc(p.getId()).stream()
+                .map(img -> new ProductImageResponse(
+                        img.getId(),
+                        img.getImageUrl(),
+                        img.getIsPrimary(),
+                        img.getSortOrder()))
+                .toList();
+        response.setImages(images);
+
+        // map bullets
+        List<ProductBulletResponse> bullets = productBulletRepository
+                .findByProductIdOrderBySortOrderAsc(p.getId()).stream()
+                .map(b -> new ProductBulletResponse(
+                        b.getId(),
+                        b.getBrand(),
+                        b.getWeight(),
+                        b.getDimension(),
+                        b.getContent(),
+                        b.getSortOrder()))
+                .toList();
+        response.setBullets(bullets);
+
+        // map shipping options
+        List<ShippingOptionResponse> shippingOptions = shippingOptionRepository
+                .findByProductId(p.getId()).stream()
+                .map(s -> new ShippingOptionResponse(
+                        s.getId(),
+                        s.getLabel(),
+                        s.getDescription(),
+                        s.getIsFree()))
+                .toList();
+        response.setShippingOptions(shippingOptions);
+        return response;
     }
 }
