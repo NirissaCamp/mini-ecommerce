@@ -25,10 +25,19 @@ async function parseBody(res){
 async function handleResponse(res) {
     const data = await parseBody(res);
     if (!res.ok) {
+        const firstError =
+            Array.isArray(data?.errors) && data.errors.length > 0
+                ? data.errors[0]
+                : null;
+
         const msg =
-            data && typeof data === 'object' && data.message != null
-                ? String(data.message) : typeof data === "string"
-                                            ?data : `${res.status} ${res.statusText}`;
+            firstError?.defaultMessage
+                ? String(firstError.defaultMessage)
+                : data && typeof data === 'object' && data.message != null
+                    ? String(data.message)
+                    : typeof data === 'string'
+                        ? data
+                        : `${res.status} ${res.statusText}`;
         throw new Error(msg);
     }
     return data;

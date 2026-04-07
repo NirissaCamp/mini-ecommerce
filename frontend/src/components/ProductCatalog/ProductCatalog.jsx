@@ -1,4 +1,5 @@
 import { useState, useEffect, useMemo } from 'react';
+import { useNavigate, useLocation} from "react-router-dom";
 import ProductCard from '../ProductCard/ProductCard';
 import { getProducts } from '../../api/products';
 import { addToCart } from '../../api/cart';
@@ -32,6 +33,8 @@ export default function ProductCatalog({ userName, onNeedAuth, onCartUpdate }) {
     const [sort,     setSort]     = useState('featured');
     const [search,   setSearch]   = useState('');
     const [toast,    setToast]    = useState('');
+    const location = useLocation();
+    const navigate = useNavigate();
 
     function showToast(msg) {
         setToast(msg);
@@ -47,6 +50,14 @@ export default function ProductCatalog({ userName, onNeedAuth, onCartUpdate }) {
             .catch(e => setError(e.message || 'Failed to load products.'))
             .finally(() => setLoading(false));
     }, []);
+
+    useEffect(() => {
+        const ts = location.state?.resetProductSearch;
+        if (ts != null) {
+            setSearch('');
+            navigate(location.pathname, { replace: true, state: {} });
+        }
+    }, [location.state, location.pathname, navigate]);
 
     // Client-side filter + sort — no extra network calls
     const displayed = useMemo(() => {

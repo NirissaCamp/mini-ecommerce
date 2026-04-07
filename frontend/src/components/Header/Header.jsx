@@ -36,7 +36,16 @@ export default function Header({ onOpenAuth, userName, onLogout, isAdmin, cartCo
         <header className="site-header">
             <div className="site-header__inner">
                 <div className="site-header__brand">
-                    <Link className="site-header__logo" to={"/"}>MiniShop</Link>
+                    <Link
+                        className="site-header__logo"
+                        to={"/"}
+                        onClick={(e) => {
+                            e.preventDefault()
+                            navigate('/', { state: { resetProductSearch: Date.now() } })
+                        }}
+                    >
+                        MiniShop
+                    </Link>
                 </div>
                 <button type="button" className="site-header__deliver" aria-label="选择配送地址">
                     <svg

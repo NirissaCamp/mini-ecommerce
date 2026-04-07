@@ -3,7 +3,7 @@ import LoginForm from '../LoginForm/LoginForm.jsx'
 import RegisterForm from '../RegisterForm/RegisterForm.jsx'
 import './AuthModal.css'
 
-export default function AuthModal({ open, onClose, onMessage, onLoggedIn }) {
+export default function AuthModal({ open, onClose, onMessage, onLoggedIn, message }) {
     const [tab, setTab] = useState('login')
 
     if (!open) return null
@@ -35,20 +35,31 @@ export default function AuthModal({ open, onClose, onMessage, onLoggedIn }) {
                     <button
                         type="button"
                         className={tab === 'login' ? 'is-active' : ''}
-                        onClick={() => setTab('login')}
+                        onClick={() => {
+                            onMessage?.('')
+                            setTab('login')
+                        }}
                     >
                         登录
                     </button>
                     <button
                         type="button"
                         className={tab === 'register' ? 'is-active' : ''}
-                        onClick={() => setTab('register')}
+                        onClick={() => {
+                            onMessage?.('')
+                            setTab('register')
+                        }}
                     >
                         注册
                     </button>
                 </div>
 
                 <div className="auth-modal__body">
+                    {message ? (
+                        <div className="auth-modal__error" role="alert" aria-live="polite">
+                            {message}
+                        </div>
+                    ) : null}
                     {tab === 'login' && (
                         <LoginForm onMessage={onMessage} onLoggedIn={onLoggedIn} />
                     )}
