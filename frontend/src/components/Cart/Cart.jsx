@@ -29,7 +29,7 @@ function SkeletonRow() {
     )
 }
 
-export default function Cart({ onCartUpdate, onNeedAuth }) {
+export default function Cart({ onCartUpdate, onNeedAuth, userName }) {
     const [items,   setItems]   = useState([])
     const [loading, setLoading] = useState(true)
     const [error,   setError]   = useState(null)
@@ -41,7 +41,12 @@ export default function Cart({ onCartUpdate, onNeedAuth }) {
     const token = localStorage.getItem('token')
 
     async function loadCart() {
-        if (!token) { setLoading(false); return }
+        if (!token) {
+            setItems([])
+            onCartUpdate(0)
+            setLoading(false)
+            return
+        }
         setLoading(true)
         setError(null)
         try {
@@ -55,7 +60,7 @@ export default function Cart({ onCartUpdate, onNeedAuth }) {
         }
     }
 
-    useEffect(() => { loadCart() }, [])
+    useEffect(() => { loadCart() }, [userName])
 
     function addBusy(id) {
         setBusy(prev => new Set(prev).add(id))

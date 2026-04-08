@@ -189,10 +189,16 @@ function App() {
             />
             <Route
                 path="/cart"
-                element={<Cart onCartUpdate={setCartCount} onNeedAuth={() => {
+                element={
+                <Cart
+                    onCartUpdate={setCartCount}
+                    onNeedAuth={() => {
                     setMsg('')
                     setAuthOpen(true)
-                }}/>}
+                    }}
+                    userName={userName}
+                />
+            }
             />
         </Routes>
 
