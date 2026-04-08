@@ -75,7 +75,11 @@ export default function ProductCard({ product, isLoggedIn, onAdd, onNeedAuth }) 
     }
 
     return (
-        <article className={`pc-card${outOfStock ? ' pc-card--oos' : ''}`}>
+        <article
+            className={`pc-card${outOfStock ? ' pc-card--oos' : ''}`}
+            onClick={() => navigate(`/products/${product.id}`)}
+            style={{ cursor: 'pointer' }}
+        >
 
             <div className="pc-card__image" style={!product.images?.length ? { background: color.bg } : {}}>
                 {product.images?.length
@@ -88,8 +92,6 @@ export default function ProductCard({ product, isLoggedIn, onAdd, onNeedAuth }) 
 
             <div className="pc-card__body">
                 <h3 className="pc-card__name"
-                    style={{cursor:'pointer'}}
-                    onClick={()=>navigate(`/products/${product.id}`)}
                     title={product.name}
                 >
                     {product.name}
@@ -116,7 +118,7 @@ export default function ProductCard({ product, isLoggedIn, onAdd, onNeedAuth }) 
                     type="button"
                     className={`pc-card__btn${status === 'added' ? ' pc-card__btn--added' : ''}`}
                     disabled={outOfStock || status === 'adding'}
-                    onClick={handleAdd}
+                    onClick={(e)=>{e.stopPropagation(); handleAdd();}}
                 >
                     {btnLabel()}
                 </button>
