@@ -13,7 +13,7 @@ export default function AuthModal({ open, onClose, onMessage, onLoggedIn, messag
             className="auth-modal__backdrop"
             role="dialog"
             aria-modal="true"
-            onClick={onClose}
+            // onClick={onClose}
         >
             <div
                 className="auth-modal__panel"
