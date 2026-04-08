@@ -57,6 +57,9 @@ function App() {
       if (location.pathname === '/cart') {
           navigate('/', { replace: true })
       }
+      if (location.pathname.startsWith('/products/')){
+          navigate('/',{replace:true})
+      }
   }
 
     function loadCartCount() {
