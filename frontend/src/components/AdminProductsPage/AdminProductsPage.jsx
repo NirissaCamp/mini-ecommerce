@@ -4,6 +4,8 @@ import {
     adminDeleteProduct,
     adminListProducts,
     adminUpdateProduct,
+    adminAddProductImage,
+    adminDeleteProductImage,
 } from '../../api/adminProducts'
 import './AdminProductsPage.css'
 
@@ -32,6 +34,10 @@ export default function AdminProductsPage() {
     const [error, setError] = useState('')
     const [form, setForm] = useState(EMPTY_FORM)
     const [editingId, setEditingId] = useState(null)
+    const [managingImagesFor, setManagingImagesFor] = useState(null)//product object
+    const [imageUrl, setImageUrl] = useState('')
+    const [imageIsPrimary, setImageIsPrimary] = useState(false)
+    const [imageSaving, setImageSaving] = useState(false)
 
     const token = useMemo(() => localStorage.getItem('token'), [])
 
@@ -120,6 +126,45 @@ export default function AdminProductsPage() {
             await loadProducts()
         } catch (e) {
             setError(e.message || 'Delete failed')
+        }
+    }
+
+    async function handleAddImage(e) {
+        e.preventDefault()
+        if (!imageUrl.trim()) return
+        setImageSaving(true)
+        try {
+            await adminAddProductImage(token, managingImagesFor.id, {
+                imageUrl: imageUrl.trim(),
+                isPrimary: imageIsPrimary,
+                sortOrder: managingImagesFor.images?.length ?? 0,
+            })
+            setImageUrl('')
+            setImageIsPrimary(false)
+            await loadProducts()
+            // refresh managingImagesFor with updated images
+            setManagingImagesFor(prev => ({
+                ...prev,
+                images: items.find(p => p.id === prev.id)?.images ?? prev.images,
+            }))
+        } catch (e) {
+            setError(e.message || 'Failed to add image')
+        } finally {
+            setImageSaving(false)
+        }
+    }
+
+    async function handleDeleteImage(imageId) {
+        if (!window.confirm('Delete this image?')) return
+        try {
+            await adminDeleteProductImage(token, managingImagesFor.id, imageId)
+            await loadProducts()
+            setManagingImagesFor(prev => ({
+                ...prev,
+                images: prev.images.filter(img => img.id !== imageId),
+            }))
+        } catch (e) {
+            setError(e.message || 'Failed to delete image')
         }
     }
 
@@ -227,6 +272,9 @@ export default function AdminProductsPage() {
                                     <td>{String(p.active)}</td>
                                     <td>
                                         <button onClick={() => startEdit(p)}>Edit</button>
+                                        <button onClick={() => { setManagingImagesFor(p); setImageUrl(''); setImageIsPrimary(false); }}>
+                                            Images ({p.images?.length ?? 0})
+                                        </button>
                                         <button onClick={() => handleDelete(p.id)} className="danger">
                                             Delete
                                         </button>
@@ -237,6 +285,70 @@ export default function AdminProductsPage() {
                         </table>
                     )}
                 </section>
+                {managingImagesFor && (
+                    <section className="admin-card">
+                        <h2>Images — {managingImagesFor.name}</h2>
+                        <button type="button" className="secondary" onClick={() => setManagingImagesFor(null)}>
+                            Close
+                        </button>
+
+                        {/* existing images */}
+                        {managingImagesFor.images?.length > 0 ? (
+                            <table className="admin-table" style={{ marginTop: 12 }}>
+                                <thead>
+                                <tr>
+                                    <th>Preview</th>
+                                    <th>URL</th>
+                                    <th>Primary</th>
+                                    <th>Actions</th>
+                                </tr>
+                                </thead>
+                                <tbody>
+                                {managingImagesFor.images.map(img => (
+                                    <tr key={img.id}>
+                                        <td><img src={img.imageUrl} alt="" style={{ width: 60, height: 45, objectFit: 'cover',
+                                            borderRadius: 4 }} /></td>
+                                        <td style={{ fontSize: 12, maxWidth: 300, wordBreak: 'break-all' }}>{img.imageUrl}</td>
+                                        <td>{img.isPrimary ? 'Yes' : 'No'}</td>
+                                        <td>
+                                            <button className="danger" onClick={() => handleDeleteImage(img.id)}>Delete</button>
+                                        </td>
+                                    </tr>
+                                ))}
+                                </tbody>
+                            </table>
+                        ) : (
+                            <p>No images yet.</p>
+                        )}
+
+                        {/* add new image */}
+                        <form onSubmit={handleAddImage} className="admin-form" style={{ marginTop: 16 }}>
+                            <h3>Add Image</h3>
+                            <label>
+                                Image URL
+                                <input
+                                    value={imageUrl}
+                                    onChange={e => setImageUrl(e.target.value)}
+                                    placeholder="https://images.unsplash.com/..."
+                                    required
+                                />
+                            </label>
+                            <label className="admin-form__checkbox">
+                                <input
+                                    type="checkbox"
+                                    checked={imageIsPrimary}
+                                    onChange={e => setImageIsPrimary(e.target.checked)}
+                                />
+                                Set as primary image
+                            </label>
+                            <div className="admin-form__actions">
+                                <button type="submit" disabled={imageSaving}>
+                                    {imageSaving ? 'Adding...' : 'Add Image'}
+                                </button>
+                            </div>
+                        </form>
+                    </section>
+                )}
             </div>
         </main>
     )

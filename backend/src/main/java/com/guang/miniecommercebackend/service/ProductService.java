@@ -1,11 +1,13 @@
 package com.guang.miniecommercebackend.service;
 
 import com.guang.miniecommercebackend.dto.ProductImageResponse;
+import com.guang.miniecommercebackend.dto.ProductImageRequest;
 import com.guang.miniecommercebackend.dto.ProductBulletResponse;
 import com.guang.miniecommercebackend.dto.ShippingOptionResponse;
 import com.guang.miniecommercebackend.dto.ProductResponse;
 import com.guang.miniecommercebackend.dto.ProductUpsertRequest;
 import com.guang.miniecommercebackend.entity.Product;
+import com.guang.miniecommercebackend.entity.ProductImage;
 import com.guang.miniecommercebackend.repository.ProductRepository;
 import com.guang.miniecommercebackend.repository.ProductImageRepository;
 import com.guang.miniecommercebackend.repository.ProductBulletRepository;
@@ -75,6 +77,27 @@ public class ProductService {
         Product p = getByIdOr404(id);
         productRepository.delete(p);
     }
+
+    public ProductImageResponse addImage(Long productId, ProductImageRequest req) {
+        Product product = getByIdOr404(productId);
+        ProductImage img = new ProductImage();
+        img.setProduct(product);
+        img.setImageUrl(req.getImageUrl());
+        img.setIsPrimary(req.getIsPrimary() != null ? req.getIsPrimary() : false);
+        img.setSortOrder(req.getSortOrder() != null ? req.getSortOrder() : 0);
+        ProductImage saved = productImageRepository.save(img);
+        return new ProductImageResponse(saved.getId(), saved.getImageUrl(), saved.getIsPrimary(), saved.getSortOrder());
+    }
+
+    public void deleteImage(Long productId, Long imageId) {
+        ProductImage img = productImageRepository.findById(imageId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "image not found"));
+        if (!img.getProduct().getId().equals(productId)) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "image does not belong to this product");
+        }
+        productImageRepository.delete(img);
+    }
+
     private Product getByIdOr404(Long id) {
         return productRepository.findById(id)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "product not found"));
