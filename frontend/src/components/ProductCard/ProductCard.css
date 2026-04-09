@@ -103,3 +103,26 @@
 }
 .pc-card__btn--added { background: #d1fae5; border-color: #6ee7b7; color: #065f46; }
 .pc-card__btn--added:hover:not(:disabled) { background: #a7f3d0; }
+
+.pd-toast {
+    position: fixed;
+    bottom: 32px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: #1a1a1a;
+    color: #fff;
+    padding: 12px 24px;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 500;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+    z-index: 1000;
+}
+
+.pd-toast__check {
+    color: #4caf50;
+    font-size: 16px;
+}
