@@ -27,6 +27,7 @@ export default function ProductDetail({ isLoggedIn, onAdd, onNeedAuth }) {
     const navigate = useNavigate();
     const [product, setProduct] = useState(null);
     const [loading, setLoading] = useState(true);
+    const [showToast, setShowToast] = useState(false)
     const [error, setError] = useState(null);
 
 
@@ -133,10 +134,14 @@ export default function ProductDetail({ isLoggedIn, onAdd, onNeedAuth }) {
 
                         <button
                             className="pd-btn-cart"
-                            disabled={product.stock <= 0}
-                            onClick={() => {
+                            disabled={product.stock <= 0 }
+                            onClick={async () => {
                                 if (!isLoggedIn) { onNeedAuth?.(); return; }
-                                onAdd?.(product.id);
+                                try{
+                                    await onAdd?.(product.id);
+                                    setShowToast(true);
+                                    setTimeout(()=>setShowToast(false),2000);
+                                }catch{}
                             }}
                         >
                             {product.stock <= 0 ? 'Out of Stock' : 'Add to Cart'}
@@ -145,6 +150,11 @@ export default function ProductDetail({ isLoggedIn, onAdd, onNeedAuth }) {
                 </div>
 
             </div>
+            {showToast && (
+                <div className="pd-toast">
+                    <span className="pd-toast__check">✓</span>Item added to cart!
+                </div>
+            )}
         </div>
     );
 }

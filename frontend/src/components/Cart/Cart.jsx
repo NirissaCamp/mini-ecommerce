@@ -170,11 +170,15 @@ export default function Cart({ onCartUpdate, onNeedAuth, userName }) {
                             return (
                                 <div className={`cart-row${isBusy ? ' cart-row--busy' : ''}`} key={item.productId}>
 
-                                    {/* Placeholder image */}
-                                    <div className="cart-row__img" style={{ background: color.bg }}>
-                                          <span className="cart-row__initial" style={{ color: color.text }}>
-                                              {item.productName.charAt(0).toUpperCase()}
-                                          </span>
+                                    {/* Product image */}
+                                    <div className="cart-row__img" style={!item.imageUrl ? { background: color.bg } : {}}>
+                                        {item.imageUrl
+                                            ? <img src={item.imageUrl} alt={item.productName} style={{ width: '100%', height: '100%', objectFit: 'cover',
+                                                borderRadius: 6 }} />
+                                            : <span className="cart-row__initial" style={{ color: color.text }}>
+                                                  {item.productName.charAt(0).toUpperCase()}
+                                                </span>
+                                        }
                                     </div>
 
                                     {/* Name + unit price */}

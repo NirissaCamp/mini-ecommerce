@@ -4,6 +4,7 @@ import com.guang.miniecommercebackend.repository.CartRepository;
 import com.guang.miniecommercebackend.repository.CartItemRepository;
 import com.guang.miniecommercebackend.repository.ProductRepository;
 import com.guang.miniecommercebackend.repository.UserRepository;
+import com.guang.miniecommercebackend.repository.ProductImageRepository;
 import com.guang.miniecommercebackend.dto.CartResponse;
 import com.guang.miniecommercebackend.dto.CartItemResponse;
 import com.guang.miniecommercebackend.dto.AddToCartRequest;
@@ -26,13 +27,16 @@ public class CartService {
     private final ProductRepository productRepository;
     private final CartItemRepository cartItemRepository;
     private final CartRepository cartRepository;
+    private final ProductImageRepository productImageRepository;
 
     public CartService(UserRepository userRepository, ProductRepository productRepository,
-                       CartItemRepository cartItemRepository, CartRepository cartRepository){
+                       CartItemRepository cartItemRepository, CartRepository cartRepository,
+                       ProductImageRepository productImageRepository){
         this.userRepository = userRepository;
         this.productRepository = productRepository;
         this.cartItemRepository = cartItemRepository;
         this.cartRepository = cartRepository;
+        this.productImageRepository = productImageRepository;
     }
 
     // ─────────────────────────────────────────────
@@ -164,13 +168,22 @@ public class CartService {
      */
     private CartResponse toResponse(Cart cart){
         List<CartItemResponse> itemResponses = cart.getItems().stream()
-                .map(item -> new CartItemResponse(
-                        item.getProduct().getId(),
-                        item.getProduct().getName(),
-                        item.getProduct().getPrice(),
-                        item.getQuantity(),
-                        item.getProduct().getPrice().multiply(BigDecimal.valueOf(item.getQuantity()))
-                )).toList();
+                .map(item -> {
+                    String imageUrl = productImageRepository
+                            .findByProductIdOrderBySortOrderAsc(item.getProduct().getId())
+                            .stream()
+                            .filter(img -> Boolean.TRUE.equals(img.getIsPrimary()))
+                            .findFirst()
+                            .map(img -> img.getImageUrl())
+                            .orElse(null);
+                    return new CartItemResponse(
+                            item.getProduct().getId(),
+                            item.getProduct().getName(),
+                            item.getProduct().getPrice(),
+                            item.getQuantity(),
+                            item.getProduct().getPrice().multiply(BigDecimal.valueOf(item.getQuantity())),
+                            imageUrl);
+                }).toList();
         BigDecimal total = itemResponses.stream()
                 .map(CartItemResponse::getSubtotal)
                 .reduce(BigDecimal.ZERO, BigDecimal::add);

@@ -9,14 +9,16 @@ public class CartItemResponse {
     private BigDecimal unitPrice;
     private Integer quantity;
     private BigDecimal subtotal;  // unitPrice × quantity, computed in service
+    private String imageUrl;
 
     public CartItemResponse(Long productId, String productName, BigDecimal unitPrice,
-                            Integer quantity, BigDecimal subtotal){
+                            Integer quantity, BigDecimal subtotal, String imageUrl){
         this.productId = productId;
         this.productName = productName;
         this.unitPrice = unitPrice;
         this.quantity = quantity;
         this.subtotal = subtotal;
+        this.imageUrl = imageUrl;
     }
     public Long getProductId() {return productId;}
     public void setProductId(Long productId) {
@@ -54,4 +56,7 @@ public class CartItemResponse {
     public void setSubtotal(BigDecimal subtotal) {
         this.subtotal = subtotal;
     }
+
+    public String getImageUrl() { return imageUrl; }
+    public void setImageUrl(String imageUrl) { this.imageUrl = imageUrl; }
 }
