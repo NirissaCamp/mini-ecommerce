@@ -1,21 +1,16 @@
-.admin-page {
-    background: #eaeded;
-    min-height: calc(100svh - 80px);
-    padding: 16px;
+.ap-page {
+    padding: 0;
 }
 
-.admin-page__inner {
-    max-width: 1100px;
-    margin: 0 auto;
+.ap-title {
+    font-size: 22px;
+    font-weight: 700;
+    color: #1a1a2e;
+    margin: 0 0 16px;
 }
 
-.admin-page__hint {
-    margin-top: -4px;
-    color: #555;
-}
-
-.admin-page__error {
-    margin: 10px 0 14px;
+.ap-error {
+    margin-bottom: 14px;
     padding: 10px 12px;
     background: #ffe8e8;
     border: 1px solid #f2bcbc;
@@ -23,73 +18,146 @@
     border-radius: 6px;
 }
 
-.admin-card {
+/* ── 2-column grid ── */
+.ap-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+}
+
+/* ── Card ── */
+.ap-card {
     background: #fff;
-    border-radius: 8px;
-    padding: 14px 16px;
-    margin-bottom: 14px;
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12);
+    border-radius: 12px;
+    padding: 20px;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.08);
 }
 
-.admin-form {
-    display: grid;
-    gap: 10px;
+.ap-card__title {
+    font-size: 16px;
+    font-weight: 700;
+    color: #1a1a2e;
+    margin: 0 0 16px;
 }
 
-.admin-form label {
+/* ── Form ── */
+.ap-form {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.ap-form__row {
     display: grid;
-    gap: 6px;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+}
+
+.ap-label {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+    font-size: 13px;
     font-weight: 600;
+    color: #333;
 }
 
-.admin-form input,
-.admin-form textarea {
-    border: 1px solid #ccc;
+.ap-input {
+    border: 1px solid #ddd;
     border-radius: 6px;
     padding: 8px 10px;
     font: inherit;
+    font-size: 13px;
+    outline: none;
+    transition: border 0.15s;
 }
 
-.admin-form__checkbox {
-    display: flex !important;
+.ap-input:focus {
+    border-color: #5c6bc0;
+}
+
+.ap-checkbox {
+    display: flex;
     align-items: center;
     gap: 8px;
-    font-weight: 500;
+    font-size: 13px;
+    color: #333;
+    margin-top: 8px;
 }
 
-.admin-form__actions {
+.ap-form__actions {
     display: flex;
-    gap: 8px;
+    gap: 16px;
+    margin-top: 4px;
+    justify-content: center;
 }
 
-.admin-form button,
-.admin-table button {
-    border: 1px solid #d0d0d0;
+.ap-hint {
+    font-size: 13px;
+    color: #888;
+    margin: 0 0 12px;
+}
+
+/* ── Buttons ── */
+.ap-btn {
+    width: 100px;
+    padding: 8px 18px;
     border-radius: 6px;
-    padding: 6px 10px;
+    border: none;
+    font-size: 13px;
+    font-weight: 600;
     cursor: pointer;
-    background: #fff;
+    transition: opacity 0.15s;
 }
 
-.admin-form button.secondary {
-    background: #f7f7f7;
-}
+.ap-btn:disabled { opacity: 0.6; cursor: not-allowed; }
+.ap-btn:hover:not(:disabled) { opacity: 0.85; }
 
-.admin-table button.danger {
-    color: #b00020;
-    border-color: #e0b5bd;
-    margin-left: 8px;
-}
+.ap-btn--green  { background: #4caf50; color: #fff; }
+.ap-btn--grey   { background: #e0e0e0; color: #333; }
 
-.admin-table {
+.ap-btn--sm     { padding: 6px 0; width: 100px; font-size: 13px; font-weight: 600; background: #e0e0e0; border: none; color:
+        #333; border-radius: 8px; margin-right: 6px; cursor: pointer; transition: opacity 0.15s; }
+.ap-btn--sm:hover { opacity: 0.85; }
+
+.ap-btn--red-sm { padding: 6px 0; width: 100px; font-size: 13px; font-weight: 600; background: #e53935; border: none; color:
+        #fff; border-radius: 8px; cursor: pointer; transition: opacity 0.15s; }
+.ap-btn--red-sm:hover { opacity: 0.85; }
+
+/* ── Table ── */
+.ap-table {
     width: 100%;
     border-collapse: collapse;
+    font-size: 13px;
 }
 
-.admin-table th,
-.admin-table td {
-    border-bottom: 1px solid #ececec;
+.ap-table--full { width: 100%; }
+
+.ap-table th {
     text-align: left;
-    padding: 8px;
-    font-size: 14px;
+    padding: 8px 10px;
+    color: #555;
+    font-weight: 600;
+    border-bottom: 2px solid #f0f0f0;
+}
+
+.ap-table td {
+    padding: 10px;
+    border-bottom: 1px solid #f5f5f5;
+    vertical-align: middle;
+}
+
+.ap-table__url {
+    font-size: 11px;
+    max-width: 200px;
+    word-break: break-all;
+    color: #555;
+}
+
+.ap-table__actions {
+    white-space: nowrap;
+}
+
+select.ap-input {
+    height: 44px;
 }

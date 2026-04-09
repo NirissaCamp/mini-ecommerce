@@ -65,3 +65,48 @@ export async function adminDeleteProduct(token, id) {
     if (res.status === 204) return null
     return handleResponse(res)
 }
+
+export async function adminAddProductImage(token, productId, body) {
+    const res = await fetch(`${BASE}/${productId}/images`, {
+        method: 'POST',
+        headers: authHeader(token),
+        body: JSON.stringify(body),
+    })
+    return handleResponse(res)
+}
+
+export async function adminDeleteProductImage(token, productId, imageId) {
+    const res = await fetch(`${BASE}/${productId}/images/${imageId}`, {
+        method: 'DELETE',
+        headers: { Authorization: `Bearer ${token}` },
+    })
+    if (res.status === 204) return null
+    return handleResponse(res)
+}
+
+export async function adminAddProductBullet(token, productId, body) {
+    const res = await fetch(`${BASE}/${productId}/bullets`, {
+        method: 'PUT',
+        headers: authHeader(token),
+        body: JSON.stringify(body),
+    })
+    return handleResponse(res)
+}
+
+export async function adminAddShipping(token, productId, body) {
+    const res = await fetch(`${BASE}/${productId}/shipping`, {
+        method: 'POST',
+        headers: authHeader(token),
+        body: JSON.stringify(body),
+    })
+    return handleResponse(res)
+}
+
+export async function adminDeleteShipping(token, productId, shippingId) {
+    const res = await fetch(`${BASE}/${productId}/shipping/${shippingId}`, {
+        method: 'DELETE',
+        headers: { Authorization: `Bearer ${token}` },
+    })
+    if (res.status === 204) return null
+    return handleResponse(res)
+}

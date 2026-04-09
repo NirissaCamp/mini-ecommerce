@@ -1,11 +1,17 @@
 package com.guang.miniecommercebackend.service;
 
 import com.guang.miniecommercebackend.dto.ProductImageResponse;
+import com.guang.miniecommercebackend.dto.ProductImageRequest;
 import com.guang.miniecommercebackend.dto.ProductBulletResponse;
+import com.guang.miniecommercebackend.dto.ProductBulletRequest;
 import com.guang.miniecommercebackend.dto.ShippingOptionResponse;
+import com.guang.miniecommercebackend.dto.ShippingOptionRequest;
 import com.guang.miniecommercebackend.dto.ProductResponse;
 import com.guang.miniecommercebackend.dto.ProductUpsertRequest;
 import com.guang.miniecommercebackend.entity.Product;
+import com.guang.miniecommercebackend.entity.ProductImage;
+import com.guang.miniecommercebackend.entity.ProductBullet;
+import com.guang.miniecommercebackend.entity.ShippingOption;
 import com.guang.miniecommercebackend.repository.ProductRepository;
 import com.guang.miniecommercebackend.repository.ProductImageRepository;
 import com.guang.miniecommercebackend.repository.ProductBulletRepository;
@@ -75,6 +81,62 @@ public class ProductService {
         Product p = getByIdOr404(id);
         productRepository.delete(p);
     }
+
+    public ProductImageResponse addImage(Long productId, ProductImageRequest req) {
+        Product product = getByIdOr404(productId);
+        ProductImage img = new ProductImage();
+        img.setProduct(product);
+        img.setImageUrl(req.getImageUrl());
+        img.setIsPrimary(req.getIsPrimary() != null ? req.getIsPrimary() : false);
+        img.setSortOrder(req.getSortOrder() != null ? req.getSortOrder() : 0);
+        ProductImage saved = productImageRepository.save(img);
+        return new ProductImageResponse(saved.getId(), saved.getImageUrl(), saved.getIsPrimary(), saved.getSortOrder());
+    }
+
+    public void deleteImage(Long productId, Long imageId) {
+        ProductImage img = productImageRepository.findById(imageId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "image not found"));
+        if (!img.getProduct().getId().equals(productId)) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "image does not belong to this product");
+        }
+        productImageRepository.delete(img);
+    }
+
+    public ProductBulletResponse saveBullet(Long productId, ProductBulletRequest req) {
+        Product product = getByIdOr404(productId);
+        ProductBullet bullet = productBulletRepository.findByProductId(productId)
+                .orElse(new ProductBullet());
+        bullet.setProduct(product);
+        bullet.setBrand(req.getBrand());
+        bullet.setWeight(req.getWeight());
+        bullet.setDimension(req.getDimension());
+        bullet.setContent(req.getContent());
+        ProductBullet saved = productBulletRepository.save(bullet);
+        return new ProductBulletResponse(saved.getId(), saved.getBrand(), saved.getWeight(),
+                saved.getDimension(), saved.getContent());
+    }
+
+    public ShippingOptionResponse addShipping(Long productId, ShippingOptionRequest req) {
+        Product product = getByIdOr404(productId);
+        ShippingOption shipping = new ShippingOption();
+        shipping.setProduct(product);
+        shipping.setLabel(req.getLabel());
+        shipping.setDescription(req.getDescription());
+        shipping.setIsFree(req.getIsFree() != null ? req.getIsFree() : false);
+        ShippingOption saved = shippingOptionRepository.save(shipping);
+        return new ShippingOptionResponse(saved.getId(), saved.getLabel(),
+                saved.getDescription(), saved.getIsFree());
+    }
+
+    public void deleteShipping(Long productId, Long shippingId) {
+        ShippingOption shipping = shippingOptionRepository.findById(shippingId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "shipping option not found"));
+        if (!shipping.getProduct().getId().equals(productId)) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "shipping does not belong to this product");
+        }
+        shippingOptionRepository.delete(shipping);
+    }
+
     private Product getByIdOr404(Long id) {
         return productRepository.findById(id)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "product not found"));
@@ -107,17 +169,12 @@ public class ProductService {
                 .toList();
         response.setImages(images);
 
-        // map bullets
+        // map bullet (1-to-1)
         List<ProductBulletResponse> bullets = productBulletRepository
-                .findByProductIdOrderBySortOrderAsc(p.getId()).stream()
-                .map(b -> new ProductBulletResponse(
-                        b.getId(),
-                        b.getBrand(),
-                        b.getWeight(),
-                        b.getDimension(),
-                        b.getContent(),
-                        b.getSortOrder()))
-                .toList();
+                .findByProductId(p.getId())
+                .map(b -> new ProductBulletResponse(b.getId(), b.getBrand(), b.getWeight(), b.getDimension(), b.getContent()))
+                .map(List::of)
+                .orElse(List.of());
         response.setBullets(bullets);
 
         // map shipping options

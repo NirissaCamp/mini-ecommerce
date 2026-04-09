@@ -11,6 +11,10 @@ import ProductCatalog from './components/ProductCatalog/ProductCatalog.jsx'
 import Cart from "./components/Cart/Cart.jsx";
 import RequireAdmin from './components/RequireAdmin/RequireAdmin.jsx'
 import ProductDetail from "./components/ProductDetail/ProductDetail.jsx";
+import AdminLayout from "./components/AdminLayout/AdminLayout.jsx";
+import AdminDashboard from "./components/AdminDashboard/AdminDashboard.jsx";
+import AdminOrdersPage from "./components/AdminOrdersPage/AdminOrdersPage.jsx";
+import AdminUsersPage from "./components/AdminUsersPage/AdminUsersPage.jsx";
 
 function App() {
   const [msg, setMsg] = useState('')
@@ -20,6 +24,7 @@ function App() {
   const [cartCount, setCartCount] = useState(0)
   const navigate = useNavigate()
   const location = useLocation()
+  const isAdminPage = location.pathname.startsWith('/admin')
   const [productSearch, setProductSearch] = useState('')
   const [shippingLocation, setShippingLocation]  = useState(() => {
       try{
@@ -63,7 +68,7 @@ function App() {
       if(location.pathname === '/profile'){
           navigate('/', {replace:true})
       }
-      if(location.pathname === '/admin/products'){
+      if(location.pathname.startsWith('/admin')){
           navigate('/', {replace:true})
       }
       if (location.pathname === '/cart') {
@@ -122,7 +127,7 @@ function App() {
     }, [location, navigate])
   return (
     <>
-      <Header
+        {!isAdminPage && <Header
         onOpenAuth={() => {
             setMsg('')
             setAuthOpen(true)
@@ -135,7 +140,7 @@ function App() {
         onSearchChange={setProductSearch}
         shippingLocation={shippingLocation}
         onChangeShippingLocation={setShippingLocation}
-      />
+      />}
       <AuthModal
         open={authOpen}
         onClose={() => {
@@ -180,10 +185,17 @@ function App() {
                 element={<UserProfile onMessage={setMsg} />}
             />
             <Route
-                path="/admin/products"
+                path="/admin/*"
                 element={
                     <RequireAdmin>
-                        <AdminProductsPage />
+                        <AdminLayout userName={userName}>
+                            <Routes>
+                                <Route path="dashboard" element={<AdminDashboard />} />
+                                <Route path="products" element={<AdminProductsPage />} />
+                                <Route path="orders" element={<AdminOrdersPage />} />
+                                <Route path="users" element={<AdminUsersPage />} />
+                            </Routes>
+                        </AdminLayout>
                     </RequireAdmin>
                 }
             />
