@@ -169,187 +169,168 @@ export default function AdminProductsPage() {
     }
 
     return (
-        <main className="admin-page">
-            <div className="admin-page__inner">
-                <h1>Admin - Products</h1>
-                <p className="admin-page__hint">
-                    Manage products (create / update / delete). Requires ADMIN role.
-                </p>
+        <div className="ap-page">
+            <h1 className="ap-title">Products</h1>
+            {error && <div className="ap-error">{error}</div>}
 
-                {error && <div className="admin-page__error">{error}</div>}
+            {/* Top grid: Product form + Images */}
+            <div className="ap-grid">
 
-                <section className="admin-card">
-                    <h2>{editingId == null ? 'Create Product' : `Edit Product #${editingId}`}</h2>
-                    <form className="admin-form" onSubmit={handleSubmit}>
-                        <label>
-                            Name
-                            <input
-                                value={form.name}
-                                onChange={(e) => onChange('name', e.target.value)}
-                                required
-                            />
-                        </label>
-
-                        <label>
+                {/* Left: Product form */}
+                <section className="ap-card">
+                    <h2 className="ap-card__title">
+                        {editingId == null ? 'Products' : `Edit Product #${editingId}`}
+                    </h2>
+                    <form className="ap-form" onSubmit={handleSubmit}>
+                        <div className="ap-form__row">
+                            <label className="ap-label">
+                                Name
+                                <input className="ap-input" value={form.name} onChange={e => onChange('name',
+                                    e.target.value)} required />
+                            </label>
+                            <label className="ap-label">
+                                Price
+                                <input className="ap-input" type="number" step="0.01" min="0.01" value={form.price}
+                                       onChange={e => onChange('price', e.target.value)} required />
+                            </label>
+                        </div>
+                        <div className="ap-form__row">
+                            <label className="ap-label">
+                                Stock
+                                <input className="ap-input" type="number" min="0" value={form.stock} onChange={e =>
+                                    onChange('stock', e.target.value)} required />
+                            </label>
+                            <label className="ap-label">
+                                Active
+                                <select className="ap-input" value={String(form.active)} onChange={e =>
+                                    onChange('active', e.target.value === 'true')}>
+                                    <option value="true">True</option>
+                                    <option value="false">False</option>
+                                </select>
+                            </label>
+                        </div>
+                        <label className="ap-label">
                             Description
-                            <textarea
-                                rows={3}
-                                value={form.description}
-                                onChange={(e) => onChange('description', e.target.value)}
-                            />
+                            <textarea className="ap-input" rows={4} value={form.description} onChange={e =>
+                                onChange('description', e.target.value)} placeholder="Short Description" />
                         </label>
-
-                        <label>
-                            Price
-                            <input
-                                type="number"
-                                step="0.01"
-                                min="0.01"
-                                value={form.price}
-                                onChange={(e) => onChange('price', e.target.value)}
-                                required
-                            />
-                        </label>
-
-                        <label>
-                            Stock
-                            <input
-                                type="number"
-                                min="0"
-                                value={form.stock}
-                                onChange={(e) => onChange('stock', e.target.value)}
-                                required
-                            />
-                        </label>
-
-                        <label className="admin-form__checkbox">
-                            <input
-                                type="checkbox"
-                                checked={form.active}
-                                onChange={(e) => onChange('active', e.target.checked)}
-                            />
-                            Active
-                        </label>
-
-                        <div className="admin-form__actions">
-                            <button type="submit" disabled={saving}>
-                                {saving ? 'Saving...' : editingId == null ? 'Create' : 'Update'}
+                        <div className="ap-form__actions">
+                            <button type="submit" className="ap-btn ap-btn--green" disabled={saving}>
+                                {saving ? 'Saving...' : editingId == null ? 'Add' : 'Update'}
                             </button>
-                            {editingId != null && (
-                                <button type="button" onClick={cancelEdit} className="secondary">
-                                    Cancel
-                                </button>
-                            )}
+                            <button type="button" className="ap-btn ap-btn--grey" disabled={editingId == null}
+                                    onClick={cancelEdit}>
+                                Edit
+                            </button>
+                            <button type="button" className="ap-btn ap-btn--red" disabled={editingId == null}
+                                    onClick={() => handleDelete(editingId)}>
+                                Delete
+                            </button>
                         </div>
                     </form>
                 </section>
 
-                <section className="admin-card">
-                    <h2>Products</h2>
-                    {loading ? (
-                        <p>Loading...</p>
-                    ) : items.length === 0 ? (
-                        <p>No products</p>
+                {/* Right: Images */}
+                <section className="ap-card">
+                    <h2 className="ap-card__title">Images</h2>
+                    {!managingImagesFor ? (
+                        <p className="ap-hint">Click "Images" on a product below to manage its images.</p>
                     ) : (
-                        <table className="admin-table">
-                            <thead>
-                            <tr>
-                                <th>ID</th>
-                                <th>Name</th>
-                                <th>Price</th>
-                                <th>Stock</th>
-                                <th>Active</th>
-                                <th>Actions</th>
-                            </tr>
-                            </thead>
-                            <tbody>
-                            {items.map((p) => (
-                                <tr key={p.id}>
-                                    <td>{p.id}</td>
-                                    <td>{p.name}</td>
-                                    <td>{p.price}</td>
-                                    <td>{p.stock}</td>
-                                    <td>{String(p.active)}</td>
-                                    <td>
-                                        <button onClick={() => startEdit(p)}>Edit</button>
-                                        <button onClick={() => { setManagingImagesFor(p); setImageUrl(''); setImageIsPrimary(false); }}>
-                                            Images ({p.images?.length ?? 0})
-                                        </button>
-                                        <button onClick={() => handleDelete(p.id)} className="danger">
-                                            Delete
-                                        </button>
-                                    </td>
-                                </tr>
-                            ))}
-                            </tbody>
-                        </table>
+                        <>
+                            <p className="ap-hint"><strong>{managingImagesFor.name}</strong></p>
+                            {managingImagesFor.images?.length > 0 ? (
+                                <table className="ap-table">
+                                    <thead>
+                                    <tr>
+                                        <th>Preview</th>
+                                        <th>URL</th>
+                                        <th>Primary</th>
+                                        <th>Action</th>
+                                    </tr>
+                                    </thead>
+                                    <tbody>
+                                    {managingImagesFor.images.map(img => (
+                                        <tr key={img.id}>
+                                            <td><img src={img.imageUrl} alt="" style={{ width: 60, height: 45,
+                                                objectFit: 'cover', borderRadius: 4 }} /></td>
+                                            <td className="ap-table__url">{img.imageUrl}</td>
+                                            <td>{img.isPrimary ? 'Yes' : 'No'}</td>
+                                            <td>
+                                                <button className="ap-btn ap-btn--red-sm" onClick={() =>
+                                                    handleDeleteImage(img.id)}>Delete</button>
+                                            </td>
+                                        </tr>
+                                    ))}
+                                    </tbody>
+                                </table>
+                            ) : (
+                                <p className="ap-hint">No images yet.</p>
+                            )}
+                            <form onSubmit={handleAddImage} style={{ marginTop: 16 }}>
+                                <label className="ap-label">
+                                    Image URL
+                                    <input className="ap-input" value={imageUrl} onChange={e =>
+                                        setImageUrl(e.target.value)} placeholder="https://images.unsplash.com/..." required />
+                                </label>
+                                <label className="ap-checkbox">
+                                    <input type="checkbox" checked={imageIsPrimary} onChange={e =>
+                                        setImageIsPrimary(e.target.checked)} />
+                                    Set as primary image
+                                </label>
+                                <div style={{ marginTop: 12 }}>
+                                    <button type="submit" className="ap-btn ap-btn--green" disabled={imageSaving}>
+                                        {imageSaving ? 'Adding...' : 'Add'}
+                                    </button>
+                                </div>
+                            </form>
+                        </>
                     )}
                 </section>
-                {managingImagesFor && (
-                    <section className="admin-card">
-                        <h2>Images — {managingImagesFor.name}</h2>
-                        <button type="button" className="secondary" onClick={() => setManagingImagesFor(null)}>
-                            Close
-                        </button>
-
-                        {/* existing images */}
-                        {managingImagesFor.images?.length > 0 ? (
-                            <table className="admin-table" style={{ marginTop: 12 }}>
-                                <thead>
-                                <tr>
-                                    <th>Preview</th>
-                                    <th>URL</th>
-                                    <th>Primary</th>
-                                    <th>Actions</th>
-                                </tr>
-                                </thead>
-                                <tbody>
-                                {managingImagesFor.images.map(img => (
-                                    <tr key={img.id}>
-                                        <td><img src={img.imageUrl} alt="" style={{ width: 60, height: 45, objectFit: 'cover',
-                                            borderRadius: 4 }} /></td>
-                                        <td style={{ fontSize: 12, maxWidth: 300, wordBreak: 'break-all' }}>{img.imageUrl}</td>
-                                        <td>{img.isPrimary ? 'Yes' : 'No'}</td>
-                                        <td>
-                                            <button className="danger" onClick={() => handleDeleteImage(img.id)}>Delete</button>
-                                        </td>
-                                    </tr>
-                                ))}
-                                </tbody>
-                            </table>
-                        ) : (
-                            <p>No images yet.</p>
-                        )}
-
-                        {/* add new image */}
-                        <form onSubmit={handleAddImage} className="admin-form" style={{ marginTop: 16 }}>
-                            <h3>Add Image</h3>
-                            <label>
-                                Image URL
-                                <input
-                                    value={imageUrl}
-                                    onChange={e => setImageUrl(e.target.value)}
-                                    placeholder="https://images.unsplash.com/..."
-                                    required
-                                />
-                            </label>
-                            <label className="admin-form__checkbox">
-                                <input
-                                    type="checkbox"
-                                    checked={imageIsPrimary}
-                                    onChange={e => setImageIsPrimary(e.target.checked)}
-                                />
-                                Set as primary image
-                            </label>
-                            <div className="admin-form__actions">
-                                <button type="submit" disabled={imageSaving}>
-                                    {imageSaving ? 'Adding...' : 'Add Image'}
-                                </button>
-                            </div>
-                        </form>
-                    </section>
-                )}
             </div>
-        </main>
+
+            {/* Products table */}
+            <section className="ap-card" style={{ marginTop: 16 }}>
+                <h2 className="ap-card__title">Products</h2>
+                {loading ? (
+                    <p>Loading...</p>
+                ) : items.length === 0 ? (
+                    <p>No products</p>
+                ) : (
+                    <table className="ap-table ap-table--full">
+                        <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Name</th>
+                            <th>Price</th>
+                            <th>Stock</th>
+                            <th>Active</th>
+                            <th>Actions</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        {items.map(p => (
+                            <tr key={p.id}>
+                                <td>{p.id}</td>
+                                <td>{p.name}</td>
+                                <td>{p.price}</td>
+                                <td>{p.stock}</td>
+                                <td>{String(p.active)}</td>
+                                <td className="ap-table__actions">
+                                    <button className="ap-btn ap-btn--sm" onClick={() =>
+                                        startEdit(p)}>Edit</button>
+                                    <button className="ap-btn ap-btn--sm" onClick={() => {
+                                        setManagingImagesFor(p); setImageUrl(''); setImageIsPrimary(false); }}>
+                                        Images ({p.images?.length ?? 0})
+                                    </button>
+                                    <button className="ap-btn ap-btn--red-sm" onClick={() =>
+                                        handleDelete(p.id)}>Delete</button>
+                                </td>
+                            </tr>
+                        ))}
+                        </tbody>
+                    </table>
+                )}
+            </section>
+        </div>
     )
 }
