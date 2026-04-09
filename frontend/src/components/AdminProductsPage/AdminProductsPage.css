@@ -87,8 +87,9 @@
 
 .ap-form__actions {
     display: flex;
-    gap: 8px;
+    gap: 16px;
     margin-top: 4px;
+    justify-content: center;
 }
 
 .ap-hint {
@@ -99,6 +100,7 @@
 
 /* ── Buttons ── */
 .ap-btn {
+    width: 100px;
     padding: 8px 18px;
     border-radius: 6px;
     border: none;
@@ -115,13 +117,13 @@
 .ap-btn--grey   { background: #e0e0e0; color: #333; }
 .ap-btn--red    { background: #e53935; color: #fff; }
 
-.ap-btn--sm     { padding: 5px 12px; font-size: 12px; background: #f5f5f5; border: 1px solid #ddd; color: #333;
-    border-radius: 5px; margin-right: 6px; cursor: pointer; }
-.ap-btn--sm:hover { background: #e8e8e8; }
+.ap-btn--sm     { padding: 6px 0; width: 100px; font-size: 13px; font-weight: 600; background: #e0e0e0; border: none; color:
+        #333; border-radius: 8px; margin-right: 6px; cursor: pointer; transition: opacity 0.15s; }
+.ap-btn--sm:hover { opacity: 0.85; }
 
-.ap-btn--red-sm { padding: 5px 12px; font-size: 12px; background: #fff; border: 1px solid #e57373; color: #e53935;
-    border-radius: 5px; cursor: pointer; }
-.ap-btn--red-sm:hover { background: #fff5f5; }
+.ap-btn--red-sm { padding: 6px 0; width: 100px; font-size: 13px; font-weight: 600; background: #e53935; border: none; color:
+        #fff; border-radius: 8px; cursor: pointer; transition: opacity 0.15s; }
+.ap-btn--red-sm:hover { opacity: 0.85; }
 
 /* ── Table ── */
 .ap-table {

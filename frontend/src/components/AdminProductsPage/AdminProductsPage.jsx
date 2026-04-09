@@ -78,6 +78,10 @@ export default function AdminProductsPage() {
             stock: item.stock ?? '',
             active: Boolean(item.active),
         })
+
+        setManagingImagesFor(item)
+        setImageUrl('')
+        setImageIsPrimary(false)
     }
 
     function cancelEdit() {
@@ -277,7 +281,7 @@ export default function AdminProductsPage() {
                                         setImageIsPrimary(e.target.checked)} />
                                     Set as primary image
                                 </label>
-                                <div style={{ marginTop: 12 }}>
+                                <div style={{ marginTop: 12, display:'flex', justifyContent:'center' }}>
                                     <button type="submit" className="ap-btn ap-btn--green" disabled={imageSaving}>
                                         {imageSaving ? 'Adding...' : 'Add'}
                                     </button>
@@ -318,10 +322,6 @@ export default function AdminProductsPage() {
                                 <td className="ap-table__actions">
                                     <button className="ap-btn ap-btn--sm" onClick={() =>
                                         startEdit(p)}>Edit</button>
-                                    <button className="ap-btn ap-btn--sm" onClick={() => {
-                                        setManagingImagesFor(p); setImageUrl(''); setImageIsPrimary(false); }}>
-                                        Images ({p.images?.length ?? 0})
-                                    </button>
                                     <button className="ap-btn ap-btn--red-sm" onClick={() =>
                                         handleDelete(p.id)}>Delete</button>
                                 </td>
