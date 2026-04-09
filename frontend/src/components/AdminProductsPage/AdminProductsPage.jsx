@@ -274,14 +274,11 @@ export default function AdminProductsPage() {
                             <button type="submit" className="ap-btn ap-btn--green" disabled={saving}>
                                 {saving ? 'Saving...' : editingId == null ? 'Add' : 'Update'}
                             </button>
-                            <button type="button" className="ap-btn ap-btn--grey" disabled={editingId == null}
-                                    onClick={cancelEdit}>
-                                Edit
-                            </button>
-                            <button type="button" className="ap-btn ap-btn--red" disabled={editingId == null}
-                                    onClick={() => handleDelete(editingId)}>
-                                Delete
-                            </button>
+                            {editingId != null && (
+                                <button type="button" className="ap-btn ap-btn--grey" onClick={cancelEdit}>
+                                    Cancel
+                                </button>
+                            )}
                         </div>
                     </form>
                 </section>
