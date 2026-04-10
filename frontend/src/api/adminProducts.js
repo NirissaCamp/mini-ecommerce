@@ -75,6 +75,15 @@ export async function adminAddProductImage(token, productId, body) {
     return handleResponse(res)
 }
 
+export async function adminUpdateProductImage(token, productId, imageId, body){
+    const res = await  fetch(`${BASE}/${productId}/images/${imageId}`,{
+        method:'PUT',
+        headers:authHeader(token),
+        body:JSON.stringify(body),
+    })
+    return handleResponse(res)
+}
+
 export async function adminDeleteProductImage(token, productId, imageId) {
     const res = await fetch(`${BASE}/${productId}/images/${imageId}`, {
         method: 'DELETE',

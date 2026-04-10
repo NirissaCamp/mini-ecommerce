@@ -28,6 +28,16 @@ public class AdminProductImageController {
     }
 
     @PreAuthorize("hasRole('ADMIN')")
+    @PutMapping("/{imageId}")
+    public ResponseEntity<ProductImageResponse> updateImage(
+            @PathVariable Long productId,
+            @PathVariable Long imageId,
+            @Valid @RequestBody ProductImageRequest req){
+        ProductImageResponse updated = productService.updateImage(productId, imageId, req);
+        return ResponseEntity.ok(updated);
+    }
+
+    @PreAuthorize("hasRole('ADMIN')")
     @DeleteMapping("/{imageId}")
     public ResponseEntity<Void> deleteImage(
             @PathVariable Long productId,

@@ -5,6 +5,7 @@ import {
     adminListProducts,
     adminUpdateProduct,
     adminAddProductImage,
+    adminUpdateProductImage,
     adminDeleteProductImage,
     adminAddProductBullet,
     adminAddShipping,
@@ -40,6 +41,7 @@ export default function AdminProductsPage() {
     const [managingImagesFor, setManagingImagesFor] = useState(null)//product object
     const [imageUrl, setImageUrl] = useState('')
     const [imageIsPrimary, setImageIsPrimary] = useState(false)
+    const [editingImageId,setEditingImageId] = useState(null)
     const [imageSaving, setImageSaving] = useState(false)
     const [bulletForm, setBulletForm] = useState({brand:'', weight:'',dimension:'',content:''})
     const [bulletSaving, setBulletSaving] = useState(false)
@@ -117,6 +119,8 @@ export default function AdminProductsPage() {
     function cancelEdit() {
         setEditingId(null)
         setForm(EMPTY_FORM)
+        setManagingImagesFor(null)
+        setEditingImageId(null)
         setBulletForm({ brand: '', weight: '', dimension: '', content: '' })
         setImageUrl('')
         setImageIsPrimary(false)
@@ -125,6 +129,20 @@ export default function AdminProductsPage() {
         setBulletErrors({})
         setImageErrors({})
         setShippingErrors({})
+    }
+
+    function  startEditImage(img){
+        setEditingImageId(img.id)
+        setImageUrl(img.imageUrl)
+        setImageIsPrimary(img.isPrimary)
+        setImageErrors({})
+    }
+
+    function  cancelEditImage(){
+        setEditingImageId(null)
+        setImageUrl('')
+        setImageIsPrimary(false)
+        setImageErrors({})
     }
 
     function  validate(){
@@ -267,16 +285,25 @@ export default function AdminProductsPage() {
         setImageErrors({})
         setImageSaving(true)
         try {
-            await adminAddProductImage(token, managingImagesFor.id, {
-                imageUrl: imageUrl.trim(),
-                isPrimary: imageIsPrimary,
-                sortOrder: managingImagesFor.images?.length ?? 0,
-            })
+            if (editingImageId){
+                await  adminUpdateProductImage(token, managingImagesFor.id, editingImageId, {
+                    imageUrl:imageUrl.trim(),
+                    isPrimary: imageIsPrimary,
+                })
+                setEditingImageId(null)
+            }else {
+                await adminAddProductImage(token, managingImagesFor.id, {
+                    imageUrl: imageUrl.trim(),
+                    isPrimary: imageIsPrimary,
+                    sortOrder: managingImagesFor.images?.length ?? 0,
+                })
+            }
             setImageUrl('')
             setImageIsPrimary(false)
             await loadProducts()
         } catch (e) {
             setError(e.message || 'Failed to add image')
+            setError(e.message || 'Failed to save image')
         } finally {
             setImageSaving(false)
         }
@@ -469,6 +496,7 @@ export default function AdminProductsPage() {
                                         <td className="ap-table__url">{img.imageUrl}</td>
                                         <td>{img.isPrimary ? 'Yes' : 'No'}</td>
                                         <td>
+                                            <button className="ap-btn ap-btn--sm" onClick={()=>startEditImage(img)}>Edit</button>
                                             <button className="ap-btn ap-btn--red-sm" onClick={() => handleDeleteImage(img.id)}>Delete</button>
                                         </td>
                                     </tr>
@@ -493,8 +521,11 @@ export default function AdminProductsPage() {
                             </label>
                             <div className="ap-form__actions">
                                 <button type="submit" className="ap-btn ap-btn--green" disabled={imageSaving || !managingImagesFor}>
-                                    {imageSaving ? 'Adding...' : 'Add'}
+                                    {imageSaving ? 'Saving...' : editingImageId ? 'Update' : 'Add'}
                                 </button>
+                                {editingImageId && (
+                                    <button type="button" className="ap-btn ap-btn--grey" onClick={cancelEditImage}>Cancel</button>
+                                )}
                             </div>
                         </form>
                     </section>

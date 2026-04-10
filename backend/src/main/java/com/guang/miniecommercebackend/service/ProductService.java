@@ -97,6 +97,21 @@ public class ProductService {
         return new ProductImageResponse(saved.getId(), saved.getImageUrl(), saved.getIsPrimary(), saved.getSortOrder());
     }
 
+    public  ProductImageResponse updateImage(Long productId, Long imageId, ProductImageRequest req){
+        ProductImage img = productImageRepository.findById(imageId)
+                .orElseThrow(()->new ResponseStatusException(HttpStatus.NOT_FOUND, "image not found"));
+        if (!img.getProduct().getId().equals(productId)) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "image doest not belong to this product");
+        }
+        img.setImageUrl(req.getImageUrl());
+        img.setIsPrimary(req.getIsPrimary() != null ? req.getIsPrimary(): false);
+        if (req.getSortOrder() != null){
+            img.setSortOrder(req.getSortOrder());
+        }
+        ProductImage saved = productImageRepository.save(img);
+        return  new ProductImageResponse(saved.getId(), saved.getImageUrl(),saved.getIsPrimary(), saved.getSortOrder());
+    }
+
     public void deleteImage(Long productId, Long imageId) {
         ProductImage img = productImageRepository.findById(imageId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "image not found"));
