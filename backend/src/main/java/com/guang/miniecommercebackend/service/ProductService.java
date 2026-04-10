@@ -147,6 +147,19 @@ public class ProductService {
                 saved.getDescription(), saved.getIsFree());
     }
 
+    public ShippingOptionResponse updateShipping(Long productId, Long shippingId, ShippingOptionRequest req) {
+        ShippingOption shipping = shippingOptionRepository.findById(shippingId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "shipping option not found"));
+        if (!shipping.getProduct().getId().equals(productId)) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "shipping does not belong to this product");
+        }
+        shipping.setLabel(req.getLabel());
+        shipping.setDescription(req.getDescription());
+        shipping.setIsFree(req.getIsFree() != null ? req.getIsFree() : false);
+        ShippingOption saved = shippingOptionRepository.save(shipping);
+        return new ShippingOptionResponse(saved.getId(), saved.getLabel(), saved.getDescription(), saved.getIsFree());
+    }
+
     public void deleteShipping(Long productId, Long shippingId) {
         ShippingOption shipping = shippingOptionRepository.findById(shippingId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "shipping option not found"));

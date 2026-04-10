@@ -28,6 +28,16 @@ public class AdminShippingOptionController {
     }
 
     @PreAuthorize("hasRole('ADMIN')")
+    @PutMapping("/{shippingId}")
+    public ResponseEntity<ShippingOptionResponse> updateShipping(
+            @PathVariable Long productId,
+            @PathVariable Long shippingId,
+            @Valid @RequestBody ShippingOptionRequest req) {
+        ShippingOptionResponse updated = productService.updateShipping(productId, shippingId, req);
+        return ResponseEntity.ok(updated);
+    }
+
+    @PreAuthorize("hasRole('ADMIN')")
     @DeleteMapping("/{shippingId}")
     public ResponseEntity<Void> deleteShipping(
             @PathVariable Long productId,

@@ -120,6 +120,10 @@
         #333; border-radius: 8px; margin-right: 6px; cursor: pointer; transition: opacity 0.15s; }
 .ap-btn--sm:hover { opacity: 0.85; }
 
+.ap-btn--green-sm { padding: 6px 0; width: 100px; font-size: 13px; font-weight: 600; background: #4caf50; border: none; color:
+        #fff; border-radius: 8px; margin-right: 6px; cursor: pointer; transition: opacity 0.15s; }
+.ap-btn--green-sm:hover { opacity: 0.85; }
+
 .ap-btn--red-sm { padding: 6px 0; width: 100px; font-size: 13px; font-weight: 600; background: #e53935; border: none; color:
         #fff; border-radius: 8px; cursor: pointer; transition: opacity 0.15s; }
 .ap-btn--red-sm:hover { opacity: 0.85; }

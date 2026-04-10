@@ -9,6 +9,7 @@ import {
     adminDeleteProductImage,
     adminAddProductBullet,
     adminAddShipping,
+    adminUpdateShipping,
     adminDeleteShipping,
 } from '../../api/adminProducts'
 import './AdminProductsPage.css'
@@ -46,6 +47,7 @@ export default function AdminProductsPage() {
     const [bulletForm, setBulletForm] = useState({brand:'', weight:'',dimension:'',content:''})
     const [bulletSaving, setBulletSaving] = useState(false)
     const [shippingForm, setShippingForm] = useState({label:'', description:'', isFree:false})
+    const [editingShippingId, setEditingShippingId] = useState(null)
     const [shippingSaving, setShippingSaving] = useState(false)
     const [formErrors, setFormErrors] = useState({})
     const [bulletErrors, setBulletErrors] = useState({})
@@ -121,6 +123,7 @@ export default function AdminProductsPage() {
         setForm(EMPTY_FORM)
         setManagingImagesFor(null)
         setEditingImageId(null)
+        setEditingShippingId(null)
         setBulletForm({ brand: '', weight: '', dimension: '', content: '' })
         setImageUrl('')
         setImageIsPrimary(false)
@@ -143,6 +146,18 @@ export default function AdminProductsPage() {
         setImageUrl('')
         setImageIsPrimary(false)
         setImageErrors({})
+    }
+
+    function startEditShipping(s) {
+        setEditingShippingId(s.id)
+        setShippingForm({ label: s.label, description: s.description ?? '', isFree: s.isFree })
+        setShippingErrors({})
+    }
+
+    function cancelEditShipping() {
+        setEditingShippingId(null)
+        setShippingForm({ label: '', description: '', isFree: false })
+        setShippingErrors({})
     }
 
     function  validate(){
@@ -344,11 +359,16 @@ export default function AdminProductsPage() {
         setShippingErrors({})
         setShippingSaving(true)
         try {
-            await adminAddShipping(token, managingImagesFor.id, shippingForm)
+            if (editingShippingId) {
+                await adminUpdateShipping(token, managingImagesFor.id, editingShippingId, shippingForm)
+                setEditingShippingId(null)
+            } else {
+                await adminAddShipping(token, managingImagesFor.id, shippingForm)
+            }
             setShippingForm({ label: '', description: '', isFree: false })
             await loadProducts()
         } catch (e) {
-            setError(e.message || 'Failed to add shipping')
+            setError(e.message || 'Failed to save shipping')
         } finally {
             setShippingSaving(false)
         }
@@ -496,7 +516,7 @@ export default function AdminProductsPage() {
                                         <td className="ap-table__url">{img.imageUrl}</td>
                                         <td>{img.isPrimary ? 'Yes' : 'No'}</td>
                                         <td>
-                                            <button className="ap-btn ap-btn--sm" onClick={()=>startEditImage(img)}>Edit</button>
+                                            <button className="ap-btn--green-sm" onClick={()=>startEditImage(img)}>Edit</button>
                                             <button className="ap-btn ap-btn--red-sm" onClick={() => handleDeleteImage(img.id)}>Delete</button>
                                         </td>
                                     </tr>
@@ -544,7 +564,10 @@ export default function AdminProductsPage() {
                                         <td>{s.label}</td>
                                         <td>{s.description}</td>
                                         <td>{s.isFree ? 'Yes' : 'No'}</td>
-                                        <td><button className="ap-btn ap-btn--red-sm" onClick={() => handleDeleteShipping(s.id)}>Delete</button></td>
+                                        <td>
+                                            <button className="ap-btn--green-sm" onClick={() => startEditShipping(s)}>Edit</button>
+                                            <button className="ap-btn ap-btn--red-sm" onClick={() => handleDeleteShipping(s.id)}>Delete</button>
+                                        </td>
                                     </tr>
                                 ))}
                                 </tbody>
@@ -575,8 +598,11 @@ export default function AdminProductsPage() {
                             </label>
                             <div className="ap-form__actions">
                                 <button type="submit" className="ap-btn ap-btn--green" disabled={shippingSaving || !managingImagesFor}>
-                                    {shippingSaving ? 'Adding...' : 'Add'}
+                                    {shippingSaving ? 'Saving...' : editingShippingId ? 'Update' : 'Add'}
                                 </button>
+                                {editingShippingId && (
+                                    <button type="button" className="ap-btn ap-btn--grey" onClick={cancelEditShipping}>Cancel</button>
+                                )}
                             </div>
                         </form>
                     </section>
@@ -624,7 +650,7 @@ export default function AdminProductsPage() {
                                 <td>{p.stock}</td>
                                 <td>{String(p.active)}</td>
                                 <td className="ap-table__actions">
-                                    <button className="ap-btn ap-btn--sm" onClick={() => startEdit(p)}>Edit</button>
+                                    <button className="ap-btn--green-sm" onClick={() => startEdit(p)}>Edit</button>
                                     <button className="ap-btn ap-btn--red-sm" onClick={() => handleDelete(p.id)}>Delete</button>
                                 </td>
                             </tr>

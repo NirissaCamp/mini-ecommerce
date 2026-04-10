@@ -111,6 +111,15 @@ export async function adminAddShipping(token, productId, body) {
     return handleResponse(res)
 }
 
+export async function adminUpdateShipping(token, productId, shippingId, body) {
+    const res = await fetch(`${BASE}/${productId}/shipping/${shippingId}`, {
+        method: 'PUT',
+        headers: authHeader(token),
+        body: JSON.stringify(body),
+    })
+    return handleResponse(res)
+}
+
 export async function adminDeleteShipping(token, productId, shippingId) {
     const res = await fetch(`${BASE}/${productId}/shipping/${shippingId}`, {
         method: 'DELETE',
