@@ -104,11 +104,16 @@ export default function AdminProductsPage() {
             dimension: existingBullet?.dimension ?? '',
             content: existingBullet?.content ?? '',
         })
+        setShippingForm({label:'', description: '', isFree: false})
     }
 
     function cancelEdit() {
         setEditingId(null)
         setForm(EMPTY_FORM)
+        setBulletForm({ brand: '', weight: '', dimension: '', content: '' })
+        setImageUrl('')
+        setImageIsPrimary(false)
+        setShippingForm({ label: '', description: '', isFree: false })
     }
 
     async function handleSubmit(e) {
@@ -122,6 +127,16 @@ export default function AdminProductsPage() {
         if (!payload.name || Number.isNaN(payload.price) || Number.isNaN(payload.stock)) {
             setError('Please fill valid name / price / stock.')
             return
+        }
+
+        if(editingId == null && !imageUrl.trim()){
+            const wantsImage = window.confirm('Do you want to add image information?')
+            if (wantsImage) return
+        }
+
+        if(editingId == null && !shippingForm.label.trim()){
+            const wantsShipping = window.confirm('Do you want to add shipping option?')
+            if (wantsShipping) return
         }
 
         setSaving(true)
@@ -229,10 +244,9 @@ export default function AdminProductsPage() {
             <h1 className="ap-title">Products</h1>
             {error && <div className="ap-error">{error}</div>}
 
-            {/* Top grid: Product form + Images */}
             <div className="ap-grid">
 
-                {/* Left: Product form */}
+                {/* Left: Products + Bullet in one card */}
                 <section className="ap-card">
                     <h2 className="ap-card__title">
                         {editingId == null ? 'Products' : `Edit Product #${editingId}`}
@@ -241,25 +255,21 @@ export default function AdminProductsPage() {
                         <div className="ap-form__row">
                             <label className="ap-label">
                                 Name
-                                <input className="ap-input" value={form.name} onChange={e => onChange('name',
-                                    e.target.value)} required />
+                                <input className="ap-input" value={form.name} onChange={e => onChange('name', e.target.value)} required />
                             </label>
                             <label className="ap-label">
                                 Price
-                                <input className="ap-input" type="number" step="0.01" min="0.01" value={form.price}
-                                       onChange={e => onChange('price', e.target.value)} required />
+                                <input className="ap-input" type="number" step="0.01" min="0.01" value={form.price} onChange={e => onChange('price', e.target.value)} required />
                             </label>
                         </div>
                         <div className="ap-form__row">
                             <label className="ap-label">
                                 Stock
-                                <input className="ap-input" type="number" min="0" value={form.stock} onChange={e =>
-                                    onChange('stock', e.target.value)} required />
+                                <input className="ap-input" type="number" min="0" value={form.stock} onChange={e => onChange('stock', e.target.value)} required />
                             </label>
                             <label className="ap-label">
                                 Active
-                                <select className="ap-input" value={String(form.active)} onChange={e =>
-                                    onChange('active', e.target.value === 'true')}>
+                                <select className="ap-input" value={String(form.active)} onChange={e => onChange('active', e.target.value === 'true')}>
                                     <option value="true">True</option>
                                     <option value="false">False</option>
                                 </select>
@@ -267,9 +277,32 @@ export default function AdminProductsPage() {
                         </div>
                         <label className="ap-label">
                             Description
-                            <textarea className="ap-input" rows={4} value={form.description} onChange={e =>
-                                onChange('description', e.target.value)} placeholder="Short Description" />
+                            <textarea className="ap-input" rows={4} value={form.description} onChange={e => onChange('description', e.target.value)} placeholder="Short Description" />
                         </label>
+
+                        {/* Bullet sub-section */}
+                        <div className="ap-subsection">
+                            <h3 className="ap-subsection__title">Bullet</h3>
+                        </div>
+                        <div className="ap-form__row">
+                            <label className="ap-label">
+                                Brand
+                                <input className="ap-input" value={bulletForm.brand} onChange={e => setBulletForm(p => ({ ...p, brand: e.target.value }))} />
+                            </label>
+                            <label className="ap-label">
+                                Weight
+                                <input className="ap-input" value={bulletForm.weight} onChange={e => setBulletForm(p => ({ ...p, weight: e.target.value }))} />
+                            </label>
+                        </div>
+                        <label className="ap-label">
+                            Dimension
+                            <input className="ap-input" value={bulletForm.dimension} onChange={e => setBulletForm(p => ({ ...p, dimension: e.target.value }))} />
+                        </label>
+                        <label className="ap-label">
+                            Content
+                            <textarea className="ap-input" rows={3} value={bulletForm.content} onChange={e => setBulletForm(p => ({ ...p, content: e.target.value }))} placeholder="Bullet point description" />
+                        </label>
+
                         <div className="ap-form__actions">
                             <button type="submit" className="ap-btn ap-btn--green" disabled={saving}>
                                 {saving ? 'Saving...' : editingId == null ? 'Add' : 'Update'}
@@ -283,151 +316,95 @@ export default function AdminProductsPage() {
                     </form>
                 </section>
 
-                {/* Right: Images */}
-                <section className="ap-card">
-                    <h2 className="ap-card__title">Images</h2>
-                    {!managingImagesFor ? (
-                        <p className="ap-hint">Click "Images" on a product below to manage its images.</p>
-                    ) : (
-                        <>
-                            <p className="ap-hint"><strong>{managingImagesFor.name}</strong></p>
-                            {managingImagesFor.images?.length > 0 ? (
-                                <table className="ap-table">
-                                    <thead>
-                                    <tr>
-                                        <th>Preview</th>
-                                        <th>URL</th>
-                                        <th>Primary</th>
-                                        <th>Action</th>
+                {/* Right: Images + Shipping stacked */}
+                <div className="ap-right-col">
+
+                    {/* Images */}
+                    <section className="ap-card">
+                        <h2 className="ap-card__title">Images</h2>
+                        {managingImagesFor?.images?.length > 0 && (
+                            <table className="ap-table" style={{ marginBottom: 16 }}>
+                                <thead>
+                                <tr>
+                                    <th>Preview</th>
+                                    <th>URL</th>
+                                    <th>Primary</th>
+                                    <th>Action</th>
+                                </tr>
+                                </thead>
+                                <tbody>
+                                {managingImagesFor.images.map(img => (
+                                    <tr key={img.id}>
+                                        <td><img src={img.imageUrl} alt="" style={{ width: 60, height: 45, objectFit: 'cover', borderRadius: 4 }} /></td>
+                                        <td className="ap-table__url">{img.imageUrl}</td>
+                                        <td>{img.isPrimary ? 'Yes' : 'No'}</td>
+                                        <td>
+                                            <button className="ap-btn ap-btn--red-sm" onClick={() => handleDeleteImage(img.id)}>Delete</button>
+                                        </td>
                                     </tr>
-                                    </thead>
-                                    <tbody>
-                                    {managingImagesFor.images.map(img => (
-                                        <tr key={img.id}>
-                                            <td><img src={img.imageUrl} alt="" style={{ width: 60, height: 45,
-                                                objectFit: 'cover', borderRadius: 4 }} /></td>
-                                            <td className="ap-table__url">{img.imageUrl}</td>
-                                            <td>{img.isPrimary ? 'Yes' : 'No'}</td>
-                                            <td>
-                                                <button className="ap-btn ap-btn--red-sm" onClick={() =>
-                                                    handleDeleteImage(img.id)}>Delete</button>
-                                            </td>
-                                        </tr>
-                                    ))}
-                                    </tbody>
-                                </table>
-                            ) : (
-                                <p className="ap-hint">No images yet.</p>
-                            )}
-                            <form onSubmit={handleAddImage} style={{ marginTop: 16 }}>
-                                <label className="ap-label">
-                                    Image URL
-                                    <input className="ap-input" value={imageUrl} onChange={e =>
-                                        setImageUrl(e.target.value)} placeholder="https://images.unsplash.com/..." required />
-                                </label>
-                                <label className="ap-checkbox">
-                                    <input type="checkbox" checked={imageIsPrimary} onChange={e =>
-                                        setImageIsPrimary(e.target.checked)} />
-                                    Set as primary image
-                                </label>
-                                <div style={{ marginTop: 12, display:'flex', justifyContent:'center' }}>
-                                    <button type="submit" className="ap-btn ap-btn--green" disabled={imageSaving}>
-                                        {imageSaving ? 'Adding...' : 'Add'}
-                                    </button>
-                                </div>
-                            </form>
-                        </>
-                    )}
-                </section>
-            </div>
+                                ))}
+                                </tbody>
+                            </table>
+                        )}
+                        <form className="ap-form" onSubmit={handleAddImage}>
+                            <label className="ap-label">
+                                Image URL
+                                <input className="ap-input" value={imageUrl} onChange={e => setImageUrl(e.target.value)} placeholder="https://images.unsplash.com/..." required />
+                            </label>
+                            <label className="ap-checkbox">
+                                <input type="checkbox" checked={imageIsPrimary} onChange={e => setImageIsPrimary(e.target.checked)} />
+                                Set as primary image
+                            </label>
+                            <div className="ap-form__actions">
+                                <button type="submit" className="ap-btn ap-btn--green" disabled={imageSaving || !managingImagesFor}>
+                                    {imageSaving ? 'Adding...' : 'Add'}
+                                </button>
+                            </div>
+                        </form>
+                    </section>
 
-            {/* Bottom grid: Bullet + Shipping */}
-            <div className="ap-grid" style={{ marginTop: 16 }}>
+                    {/* Shipping */}
+                    <section className="ap-card">
+                        <h2 className="ap-card__title">Shipping Option</h2>
+                        {managingImagesFor?.shippingOptions?.length > 0 && (
+                            <table className="ap-table" style={{ marginBottom: 16 }}>
+                                <thead>
+                                <tr><th>Label</th><th>Description</th><th>Free</th><th>Action</th></tr>
+                                </thead>
+                                <tbody>
+                                {managingImagesFor.shippingOptions.map(s => (
+                                    <tr key={s.id}>
+                                        <td>{s.label}</td>
+                                        <td>{s.description}</td>
+                                        <td>{s.isFree ? 'Yes' : 'No'}</td>
+                                        <td><button className="ap-btn ap-btn--red-sm" onClick={() => handleDeleteShipping(s.id)}>Delete</button></td>
+                                    </tr>
+                                ))}
+                                </tbody>
+                            </table>
+                        )}
+                        <form className="ap-form" onSubmit={handleAddShipping}>
+                            <label className="ap-label">
+                                Support Shipping
+                                <input className="ap-input" value={shippingForm.label} onChange={e => setShippingForm(p => ({ ...p, label: e.target.value }))} required />
+                            </label>
+                            <label className="ap-label">
+                                Shipping Description
+                                <input className="ap-input" value={shippingForm.description} onChange={e => setShippingForm(p => ({ ...p, description: e.target.value }))} />
+                            </label>
+                            <label className="ap-checkbox">
+                                <input type="checkbox" checked={shippingForm.isFree} onChange={e => setShippingForm(p => ({ ...p, isFree: e.target.checked }))} />
+                                Free shipping
+                            </label>
+                            <div className="ap-form__actions">
+                                <button type="submit" className="ap-btn ap-btn--green" disabled={shippingSaving || !managingImagesFor}>
+                                    {shippingSaving ? 'Adding...' : 'Add'}
+                                </button>
+                            </div>
+                        </form>
+                    </section>
 
-                {/* Left: Bullet */}
-                <section className="ap-card">
-                    <h2 className="ap-card__title">Bullet</h2>
-                    {!managingImagesFor ? (
-                        <p className="ap-hint">Click "Edit" on a product to manage bullets.</p>
-                    ) : (
-                        <>
-                            <p className="ap-hint"><strong>{managingImagesFor.name}</strong></p>
-                            <form onSubmit={handleAddBullet} className="ap-form">
-                                <div className="ap-form__row">
-                                    <label className="ap-label">Brand
-                                        <input className="ap-input" value={bulletForm.brand} onChange={e => setBulletForm(p => ({ ...p, brand: e.target.value }))} />
-                                    </label>
-                                    <label className="ap-label">Weight
-                                        <input className="ap-input" value={bulletForm.weight} onChange={e => setBulletForm(p => ({ ...p, weight: e.target.value }))} />
-                                    </label>
-                                </div>
-                                <label className="ap-label">Dimension
-                                    <input className="ap-input" value={bulletForm.dimension} onChange={e => setBulletForm(p => ({ ...p, dimension: e.target.value }))} />
-                                </label>
-                                <label className="ap-label">Content
-                                    <textarea className="ap-input" rows={3} value={bulletForm.content} onChange={e => setBulletForm(p => ({ ...p, content: e.target.value }))} placeholder="Bullet point description" />
-                                </label>
-                                <div style={{ marginTop: 12, display: 'flex', justifyContent: 'center' }}>
-                                    <button type="submit" className="ap-btn ap-btn--green" disabled={bulletSaving}>
-                                        {bulletSaving ? 'Saving...' : 'Save'}
-                                    </button>
-                                </div>
-                            </form>
-                        </>
-                    )}
-                </section>
-
-                {/* Right: Shipping */}
-                <section className="ap-card">
-                    <h2 className="ap-card__title">Shipping Option</h2>
-                    {!managingImagesFor ? (
-                        <p className="ap-hint">Click "Edit" on a product to manage shipping.</p>
-                    ) : (
-                        <>
-                            <p className="ap-hint"><strong>{managingImagesFor.name}</strong></p>
-                            {managingImagesFor.shippingOptions?.length > 0 ? (
-                                <table className="ap-table">
-                                    <thead>
-                                    <tr><th>Label</th><th>Description</th><th>Free</th><th>Action</th></tr>
-                                    </thead>
-                                    <tbody>
-                                    {managingImagesFor.shippingOptions.map(s => (
-                                        <tr key={s.id}>
-                                            <td>{s.label}</td>
-                                            <td>{s.description}</td>
-                                            <td>{s.isFree ? 'Yes' : 'No'}</td>
-                                            <td><button className="ap-btn ap-btn--red-sm" onClick={() =>
-                                                handleDeleteShipping(s.id)}>Delete</button></td>
-                                        </tr>
-                                    ))}
-                                    </tbody>
-                                </table>
-                            ) : (
-                                <p className="ap-hint">No shipping options yet.</p>
-                            )}
-                            <form onSubmit={handleAddShipping} className="ap-form" style={{ marginTop: 16 }}>
-                                <label className="ap-label">Support Shipping
-                                    <input className="ap-input" value={shippingForm.label} onChange={e => setShippingForm(p=> ({ ...p, label: e.target.value }))} required />
-
-                                </label>
-                                <label className="ap-label">Shipping Description
-                                    <input className="ap-input" value={shippingForm.description} onChange={e =>
-                                        setShippingForm(p => ({ ...p, description: e.target.value }))} />
-                                </label>
-                                <label className="ap-checkbox">
-                                    <input type="checkbox" checked={shippingForm.isFree} onChange={e => setShippingForm(p =>
-                                        ({ ...p, isFree: e.target.checked }))} />
-                                    Free shipping
-                                </label>
-                                <div style={{ marginTop: 12, display: 'flex', justifyContent: 'center' }}>
-                                    <button type="submit" className="ap-btn ap-btn--green" disabled={shippingSaving}>
-                                        {shippingSaving ? 'Adding...' : 'Add'}
-                                    </button>
-                                </div>
-                            </form>
-                        </>
-                    )}
-                </section>
+                </div>
             </div>
 
             {/* Products table */}
@@ -458,10 +435,8 @@ export default function AdminProductsPage() {
                                 <td>{p.stock}</td>
                                 <td>{String(p.active)}</td>
                                 <td className="ap-table__actions">
-                                    <button className="ap-btn ap-btn--sm" onClick={() =>
-                                        startEdit(p)}>Edit</button>
-                                    <button className="ap-btn ap-btn--red-sm" onClick={() =>
-                                        handleDelete(p.id)}>Delete</button>
+                                    <button className="ap-btn ap-btn--sm" onClick={() => startEdit(p)}>Edit</button>
+                                    <button className="ap-btn ap-btn--red-sm" onClick={() => handleDelete(p.id)}>Delete</button>
                                 </td>
                             </tr>
                         ))}

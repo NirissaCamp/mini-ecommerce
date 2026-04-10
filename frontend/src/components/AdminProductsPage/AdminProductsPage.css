@@ -92,12 +92,6 @@
     justify-content: center;
 }
 
-.ap-hint {
-    font-size: 13px;
-    color: #888;
-    margin: 0 0 12px;
-}
-
 /* ── Buttons ── */
 .ap-btn {
     width: 100px;
@@ -160,4 +154,25 @@
 
 select.ap-input {
     height: 44px;
+}
+
+/* ── Right column (Images + Shipping stacked) ── */
+.ap-right-col {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+/* ── Bullet sub-section divider ── */
+.ap-subsection {
+    border-top: 1px solid #f0f2f8;
+    padding-top: 16px;
+    margin-top: 4px;
+}
+
+.ap-subsection__title {
+    font-size: 15px;
+    font-weight: 700;
+    color: #1a1a2e;
+    margin: 0 0 12px;
 }
