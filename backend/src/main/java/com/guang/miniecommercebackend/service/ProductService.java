@@ -19,6 +19,7 @@ import com.guang.miniecommercebackend.repository.ShippingOptionRepository;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Comparator;
 import java.util.List;
@@ -79,6 +80,9 @@ public class ProductService {
     }
     public void deleteProduct(Long id) {
         Product p = getByIdOr404(id);
+        productImageRepository.deleteByProductId(id);      // ← delete images first
+        productBulletRepository.deleteByProductId(id);     // ← delete bullet first
+        shippingOptionRepository.deleteByProductId(id);    // ← delete shipping first
         productRepository.delete(p);
     }
 

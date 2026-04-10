@@ -176,3 +176,20 @@ select.ap-input {
     color: #1a1a2e;
     margin: 0 0 12px;
 }
+
+.ap-input--error {
+    border-color: #e53935;
+}
+
+.ap-field-error {
+    font-size: 11px;
+    color: #e53935;
+    margin-top: 2px;
+}
+
+.ap-submit-row {
+    display: flex;
+    gap: 16px;
+    justify-content: center;
+    margin: 16px 0;
+}

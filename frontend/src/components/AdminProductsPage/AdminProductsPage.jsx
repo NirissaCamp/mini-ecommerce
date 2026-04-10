@@ -45,6 +45,10 @@ export default function AdminProductsPage() {
     const [bulletSaving, setBulletSaving] = useState(false)
     const [shippingForm, setShippingForm] = useState({label:'', description:'', isFree:false})
     const [shippingSaving, setShippingSaving] = useState(false)
+    const [formErrors, setFormErrors] = useState({})
+    const [bulletErrors, setBulletErrors] = useState({})
+    const [imageErrors, setImageErrors] = useState({})
+    const [shippingErrors, setShippingErrors] = useState({})
 
     const token = useMemo(() => localStorage.getItem('token'), [])
 
@@ -105,6 +109,9 @@ export default function AdminProductsPage() {
             content: existingBullet?.content ?? '',
         })
         setShippingForm({label:'', description: '', isFree: false})
+        setBulletErrors({})
+        setImageErrors({})
+        setShippingErrors({})
     }
 
     function cancelEdit() {
@@ -114,39 +121,122 @@ export default function AdminProductsPage() {
         setImageUrl('')
         setImageIsPrimary(false)
         setShippingForm({ label: '', description: '', isFree: false })
+        setFormErrors({})
+        setBulletErrors({})
+        setImageErrors({})
+        setShippingErrors({})
     }
 
-    async function handleSubmit(e) {
+    function  validate(){
+        const  errors = {}
+        if (!form.name.trim()) errors.name = 'Name is required'
+        else if (form.name.trim().length > 200) errors.name = 'Max 200 characters'
+
+        if (!form.price) errors.price = 'Price is required'
+        else if (Number(form.price)<0) errors.price = 'Must be greater than 0'
+
+        if (form.stock === '')                          errors.stock = 'Stock is required'
+        else if (Number(form.stock) < 0)               errors.stock = 'Cannot be negative'
+        else if (!Number.isInteger(Number(form.stock))) errors.stock = 'Must be a whole number'
+
+        if (form.description.length > 500)             errors.description = 'Max 500 characters'
+        return errors
+    }
+
+    function validateBullet() {
+        const errors = {}
+        if (bulletForm.brand.length > 100)     errors.brand = 'Max 100 characters'
+        if (bulletForm.weight.length > 100)    errors.weight = 'Max 100 characters'
+        if (bulletForm.dimension.length > 100) errors.dimension = 'Max 100 characters'
+        if (bulletForm.content.length > 500)   errors.content = 'Max 500 characters'
+        return errors
+    }
+
+    function validateImage() {
+        const errors = {}
+        if (!imageUrl.trim())
+            errors.imageUrl = 'Image URL is required'
+        else if (!imageUrl.startsWith('http://') && !imageUrl.startsWith('https://'))
+            errors.imageUrl = 'Must be a valid URL (http:// or https://)'
+        return errors
+    }
+
+    function validateShipping() {
+        const errors = {}
+        if (!shippingForm.label.trim())             errors.label = 'Support Shipping is required'
+        else if (shippingForm.label.length > 100)   errors.label = 'Max 100 characters'
+        if (shippingForm.description.length > 200)  errors.description = 'Max 200 characters'
+        return errors
+    }
+
+    async function handleSubmitAll(e) {
         e.preventDefault()
         if (!token) {
             setError('Please sign in first.')
             return
         }
-
-        const payload = toPayload(form)
-        if (!payload.name || Number.isNaN(payload.price) || Number.isNaN(payload.stock)) {
-            setError('Please fill valid name / price / stock.')
+        // Validate product form
+        const errors = validate()
+        if (Object.keys(errors).length > 0) {
+            setFormErrors(errors)
             return
         }
+        setFormErrors({})
 
-        if(editingId == null && !imageUrl.trim()){
-            const wantsImage = window.confirm('Do you want to add image information?')
-            if (wantsImage) return
+        // Validate bullet if any field filled
+        if (bulletForm.brand || bulletForm.weight || bulletForm.dimension || bulletForm.content) {
+            const bErrors = validateBullet()
+            if (Object.keys(bErrors).length > 0) { setBulletErrors(bErrors); return }
         }
+        setBulletErrors({})
 
-        if(editingId == null && !shippingForm.label.trim()){
-            const wantsShipping = window.confirm('Do you want to add shipping option?')
-            if (wantsShipping) return
+        // Validate image if URL filled
+        if (imageUrl.trim()) {
+            const iErrors = validateImage()
+            if (Object.keys(iErrors).length > 0) { setImageErrors(iErrors); return }
         }
+        setImageErrors({})
+
+        // Validate shipping if label filled
+        if (shippingForm.label.trim()) {
+            const sErrors = validateShipping()
+            if (Object.keys(sErrors).length > 0) { setShippingErrors(sErrors); return }
+        }
+        setShippingErrors({})
 
         setSaving(true)
         setError('')
         try {
+            let productId
+
+            // Save product
             if (editingId == null) {
-                await adminCreateProduct(token, payload)
+                const newProduct = await adminCreateProduct(token, toPayload(form))
+                productId = newProduct.id
             } else {
-                await adminUpdateProduct(token, editingId, payload)
+                await adminUpdateProduct(token, editingId, toPayload(form))
+                productId = editingId
             }
+
+            // Save bullet if any field filled
+            if (bulletForm.brand || bulletForm.weight || bulletForm.dimension || bulletForm.content) {
+                await adminAddProductBullet(token, productId, bulletForm)
+            }
+
+            // Save image if URL filled
+            if (imageUrl.trim()) {
+                await adminAddProductImage(token, productId, {
+                    imageUrl: imageUrl.trim(),
+                    isPrimary: imageIsPrimary,
+                    sortOrder: managingImagesFor?.images?.length ?? 0,
+                })
+            }
+
+            // Save shipping if label filled
+            if (shippingForm.label.trim()) {
+                await adminAddShipping(token, productId, shippingForm)
+            }
+
             cancelEdit()
             await loadProducts()
         } catch (e2) {
@@ -172,7 +262,9 @@ export default function AdminProductsPage() {
 
     async function handleAddImage(e) {
         e.preventDefault()
-        if (!imageUrl.trim()) return
+        const errors = validateImage()
+        if (Object.keys(errors).length > 0) { setImageErrors(errors); return }
+        setImageErrors({})
         setImageSaving(true)
         try {
             await adminAddProductImage(token, managingImagesFor.id, {
@@ -203,6 +295,9 @@ export default function AdminProductsPage() {
     async function handleAddBullet(e) {
         e.preventDefault()
         if (!managingImagesFor) return
+        const errors = validateBullet()
+        if (Object.keys(errors).length > 0) { setBulletErrors(errors); return }
+        setBulletErrors({})
         setBulletSaving(true)
         try {
             await adminAddProductBullet(token, managingImagesFor.id, bulletForm)
@@ -217,6 +312,9 @@ export default function AdminProductsPage() {
     async function handleAddShipping(e) {
         e.preventDefault()
         if (!managingImagesFor) return
+        const errors = validateShipping()
+        if (Object.keys(errors).length > 0) { setShippingErrors(errors); return }
+        setShippingErrors({})
         setShippingSaving(true)
         try {
             await adminAddShipping(token, managingImagesFor.id, shippingForm)
@@ -251,21 +349,36 @@ export default function AdminProductsPage() {
                     <h2 className="ap-card__title">
                         {editingId == null ? 'Products' : `Edit Product #${editingId}`}
                     </h2>
-                    <form className="ap-form" onSubmit={handleSubmit}>
+                    <form className="ap-form" >
                         <div className="ap-form__row">
                             <label className="ap-label">
                                 Name
-                                <input className="ap-input" value={form.name} onChange={e => onChange('name', e.target.value)} required />
+                                <input className="ap-input"
+                                       value={form.name}
+                                       onChange={e => {onChange('name', e.target.value)
+                                           if (formErrors.name) setFormErrors(p => ({ ...p, name: '' }))
+                                       }} required />
+                                {formErrors.name && <span className="ap-field-error">{formErrors.name}</span> }
                             </label>
                             <label className="ap-label">
                                 Price
-                                <input className="ap-input" type="number" step="0.01" min="0.01" value={form.price} onChange={e => onChange('price', e.target.value)} required />
+                                <input className="ap-input" type="number" step="0.01" min="0.01"
+                                       value={form.price}
+                                       onChange={e => {onChange('price', e.target.value)
+                                           if (formErrors.price) setFormErrors(p => ({ ...p, price: '' }))
+                                       }} required />
+                                {formErrors.price && <span className="ap-field-error">{formErrors.price}</span> }
                             </label>
                         </div>
                         <div className="ap-form__row">
                             <label className="ap-label">
                                 Stock
-                                <input className="ap-input" type="number" min="0" value={form.stock} onChange={e => onChange('stock', e.target.value)} required />
+                                <input className="ap-input"
+                                       type="number" min="0" value={form.stock}
+                                       onChange={e => {onChange('stock', e.target.value)
+                                           if (formErrors.stock) setFormErrors(p => ({ ...p, stock: '' }))
+                                       }} required />
+                                {formErrors.stock && <span className="ap-field-error">{formErrors.stock}</span> }
                             </label>
                             <label className="ap-label">
                                 Active
@@ -277,7 +390,13 @@ export default function AdminProductsPage() {
                         </div>
                         <label className="ap-label">
                             Description
-                            <textarea className="ap-input" rows={4} value={form.description} onChange={e => onChange('description', e.target.value)} placeholder="Short Description" />
+                            <textarea className="ap-input" rows={4}
+                                      value={form.description}
+                                      onChange={e => {onChange('description', e.target.value)
+                                          if (formErrors.description) setFormErrors(p => ({ ...p, description: '' }))
+                                      }}
+                                      placeholder="Short Description" />
+                            {formErrors.description && <span className="ap-field-error">{formErrors.description}</span> }
                         </label>
 
                         {/* Bullet sub-section */}
@@ -287,32 +406,43 @@ export default function AdminProductsPage() {
                         <div className="ap-form__row">
                             <label className="ap-label">
                                 Brand
-                                <input className="ap-input" value={bulletForm.brand} onChange={e => setBulletForm(p => ({ ...p, brand: e.target.value }))} />
+                                <input className={`ap-input ${bulletErrors.brand ? 'ap-input--error' : ''}`}
+                                       value={bulletForm.brand}
+                                       onChange={e => {setBulletForm(p => ({ ...p, brand: e.target.value }))
+                                           if (bulletErrors.brand) setBulletErrors(p => ({ ...p, brand: '' }))
+                                       }} />
+                                {bulletErrors.brand && <span className="ap-field-error">{bulletErrors.brand}</span>}
                             </label>
                             <label className="ap-label">
                                 Weight
-                                <input className="ap-input" value={bulletForm.weight} onChange={e => setBulletForm(p => ({ ...p, weight: e.target.value }))} />
+                                <input className={`ap-input ${bulletErrors.weight ? 'ap-input--error' : ''}`}
+                                       value={bulletForm.weight}
+                                       onChange={e => {setBulletForm(p => ({ ...p, weight: e.target.value }))
+                                           if (bulletErrors.weight) setBulletErrors(p => ({ ...p, weight: '' }))
+                                       }} />
+                                {bulletErrors.weight && <span className="ap-field-error">{bulletErrors.weight}</span>}
                             </label>
                         </div>
                         <label className="ap-label">
                             Dimension
-                            <input className="ap-input" value={bulletForm.dimension} onChange={e => setBulletForm(p => ({ ...p, dimension: e.target.value }))} />
+                            <input className={`ap-input ${bulletErrors.dimension ? 'ap-input--error' : ''}`}
+                                   value={bulletForm.dimension}
+                                   onChange={e => {setBulletForm(p => ({ ...p, dimension: e.target.value }))
+                                       if (bulletErrors.dimension) setBulletErrors(p => ({ ...p, dimension: '' }))
+                                   }} />
+                            {bulletErrors.dimension && <span className="ap-field-error">{bulletErrors.dimension}</span>}
                         </label>
                         <label className="ap-label">
                             Content
-                            <textarea className="ap-input" rows={3} value={bulletForm.content} onChange={e => setBulletForm(p => ({ ...p, content: e.target.value }))} placeholder="Bullet point description" />
+                            <textarea className={`ap-input ${bulletErrors.content ? 'ap-input--error' : ''}`}
+                                      rows={3}
+                                      value={bulletForm.content}
+                                      onChange={e => {setBulletForm(p => ({ ...p, content: e.target.value }))
+                                          if (bulletErrors.content) setBulletErrors(p => ({ ...p, content: '' }))
+                                      }}
+                                      placeholder="Bullet point description" />
+                            {bulletErrors.content && <span className="ap-field-error">{bulletErrors.content}</span>}
                         </label>
-
-                        <div className="ap-form__actions">
-                            <button type="submit" className="ap-btn ap-btn--green" disabled={saving}>
-                                {saving ? 'Saving...' : editingId == null ? 'Add' : 'Update'}
-                            </button>
-                            {editingId != null && (
-                                <button type="button" className="ap-btn ap-btn--grey" onClick={cancelEdit}>
-                                    Cancel
-                                </button>
-                            )}
-                        </div>
                     </form>
                 </section>
 
@@ -349,7 +479,13 @@ export default function AdminProductsPage() {
                         <form className="ap-form" onSubmit={handleAddImage}>
                             <label className="ap-label">
                                 Image URL
-                                <input className="ap-input" value={imageUrl} onChange={e => setImageUrl(e.target.value)} placeholder="https://images.unsplash.com/..." required />
+                                <input className={`ap-input ${imageErrors.imageUrl ? 'ap-input--error' : ''}`}
+                                       value={imageUrl}
+                                       onChange={e => {setImageUrl(e.target.value)
+                                           if (imageErrors.imageUrl) setImageErrors(p => ({ ...p, imageUrl: '' }))
+                                       }}
+                                       placeholder="https://images.unsplash.com/..." required />
+                                {imageErrors.imageUrl && <span className="ap-field-error">{imageErrors.imageUrl}</span>}
                             </label>
                             <label className="ap-checkbox">
                                 <input type="checkbox" checked={imageIsPrimary} onChange={e => setImageIsPrimary(e.target.checked)} />
@@ -386,11 +522,21 @@ export default function AdminProductsPage() {
                         <form className="ap-form" onSubmit={handleAddShipping}>
                             <label className="ap-label">
                                 Support Shipping
-                                <input className="ap-input" value={shippingForm.label} onChange={e => setShippingForm(p => ({ ...p, label: e.target.value }))} required />
+                                <input className={`ap-input ${shippingErrors.label ? 'ap-input--error' : ''}`}
+                                       value={shippingForm.label}
+                                       onChange={e => {setShippingForm(p => ({ ...p, label: e.target.value }))
+                                           if (shippingErrors.label) setShippingErrors(p => ({ ...p, label: '' }))
+                                       }} />
+                                {shippingErrors.label && <span className="ap-field-error">{shippingErrors.label}</span>}
                             </label>
                             <label className="ap-label">
                                 Shipping Description
-                                <input className="ap-input" value={shippingForm.description} onChange={e => setShippingForm(p => ({ ...p, description: e.target.value }))} />
+                                <input className={`ap-input ${shippingErrors.description ? 'ap-input--error' : ''}`}
+                                       value={shippingForm.description}
+                                       onChange={e => {setShippingForm(p => ({ ...p, description: e.target.value }))
+                                           if (shippingErrors.description) setShippingErrors(p => ({ ...p, description: '' }))
+                                       }} />
+                                {shippingErrors.description && <span className="ap-field-error">{shippingErrors.description}</span>}
                             </label>
                             <label className="ap-checkbox">
                                 <input type="checkbox" checked={shippingForm.isFree} onChange={e => setShippingForm(p => ({ ...p, isFree: e.target.checked }))} />
@@ -405,6 +551,18 @@ export default function AdminProductsPage() {
                     </section>
 
                 </div>
+            </div>
+
+            {/* Submit row */}
+            <div className="ap-submit-row">
+                <button className="ap-btn ap-btn--green" onClick={handleSubmitAll} disabled={saving}>
+                    {saving ? 'Saving...' : editingId == null ? 'Add' : 'Update'}
+                </button>
+                {editingId != null && (
+                    <button className="ap-btn ap-btn--grey" onClick={cancelEdit}>
+                        Cancel
+                    </button>
+                )}
             </div>
 
             {/* Products table */}
