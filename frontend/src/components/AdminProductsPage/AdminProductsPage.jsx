@@ -298,8 +298,33 @@ export default function AdminProductsPage() {
         const errors = validateImage()
         if (Object.keys(errors).length > 0) { setImageErrors(errors); return }
         setImageErrors({})
+
+        //Warn if setting primary when another primary already exists
+        if (imageIsPrimary){
+            const existingPrimary = managingImagesFor?.images?.find(
+                img => img.isPrimary && img.id !== editingImageId
+            )
+            if(existingPrimary){
+                const ok = window.confirm('There is already a primary image. Set this one as primary instead?')
+                if (!ok) return
+            }
+        }
+
         setImageSaving(true)
         try {
+            //If setting as primary, demote the existing primary first
+            if(imageIsPrimary){
+                const  existingPrimary = managingImagesFor?.images?.find(
+                    img => img.isPrimary && img.id !== editingImageId
+                )
+                if(existingPrimary){
+                    await  adminUpdateProductImage(token,managingImagesFor.id, existingPrimary.id,{
+                        imageUrl:existingPrimary.imageUrl,
+                        isPrimary: false,
+                    })
+                }
+            }
+
             if (editingImageId){
                 await  adminUpdateProductImage(token, managingImagesFor.id, editingImageId, {
                     imageUrl:imageUrl.trim(),
