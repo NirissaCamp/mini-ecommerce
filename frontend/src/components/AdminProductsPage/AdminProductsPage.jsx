@@ -54,7 +54,7 @@ export default function AdminProductsPage() {
     const [bulletErrors, setBulletErrors] = useState({})
     const [imageErrors, setImageErrors] = useState({})
     const [shippingErrors, setShippingErrors] = useState({})
-    const [leftWidth, setLeftWidth] = useState(50)
+    const [leftWidth, setLeftWidth] = useState(45)
     const [isDragging, setIsDragging] = useState(false)
     const [topHeight, setTopHeight] = useState(50)
     const [isHDragging, setIsHDragging] = useState(false)
@@ -534,7 +534,7 @@ export default function AdminProductsPage() {
                         </div>
                         <label className="ap-label">
                             Description
-                            <textarea className="ap-input" rows={4}
+                            <textarea className="ap-input" rows={3}
                                       value={form.description}
                                       onChange={e => {onChange('description', e.target.value)
                                           if (formErrors.description) setFormErrors(p => ({ ...p, description: '' }))

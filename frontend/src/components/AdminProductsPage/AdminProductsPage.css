@@ -181,7 +181,7 @@
 
 .ap-table__url {
     font-size: 11px;
-    max-width: 200px;
+    max-width: 300px;
     word-break: break-all;
     color: #555;
 }
@@ -228,7 +228,7 @@ select.ap-input {
 /* ── Bullet sub-section divider ── */
 .ap-subsection {
     border-top: 1px solid #f0f2f8;
-    padding-top: 16px;
+    padding-top: 10px;
     margin-top: 4px;
 }
 
