@@ -1,0 +1,36 @@
+package com.guang.miniecommercebackend.dto;
+
+import java.time.LocalDateTime;
+
+public class UserLoginLogResponse {
+
+    private Long id;
+    private String loginIp;
+    private String deviceInfo;
+    private LocalDateTime loginTime;
+    private Boolean successFlag;
+
+    public UserLoginLogResponse(Long id, String loginIp, String deviceInfo,
+                                LocalDateTime loginTime, Boolean successFlag) {
+        this.id = id;
+        this.loginIp = loginIp;
+        this.deviceInfo = deviceInfo;
+        this.loginTime = loginTime;
+        this.successFlag = successFlag;
+    }
+
+    public Long getId() { return id; }
+    public void setId(Long id) { this.id = id; }
+
+    public String getLoginIp() { return loginIp; }
+    public void setLoginIp(String loginIp) { this.loginIp = loginIp; }
+
+    public String getDeviceInfo() { return deviceInfo; }
+    public void setDeviceInfo(String deviceInfo) { this.deviceInfo = deviceInfo; }
+
+    public LocalDateTime getLoginTime() { return loginTime; }
+    public void setLoginTime(LocalDateTime loginTime) { this.loginTime = loginTime; }
+
+    public Boolean getSuccessFlag() { return successFlag; }
+    public void setSuccessFlag(Boolean successFlag) { this.successFlag = successFlag; }
+}
