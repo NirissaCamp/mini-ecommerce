@@ -123,9 +123,21 @@ export default function Cart({ onCartUpdate, onNeedAuth, userName }) {
             setItems([])
             onCartUpdate(0)
             navigate(`/orders/${order.id}`)
-        }catch{
-            setError(e.message ?? 'Checkout failed')
-        }finally {
+        } catch (e) {
+            const msg = String(e?.message ?? '')
+            // Backend: "insufficient stock for product: <name>"
+            const named = msg.match(/insufficient stock for product:\s*(.+)/i)
+            if (named) {
+                const productName = named[1].trim()
+                setError(
+                    `Out of stock: ${productName}. Please reduce quantity or remove this item.`
+                )
+            } else if (/insufficient stock/i.test(msg) || /\b409\b/.test(msg)) {
+                setError('Out of stock. Please update your cart.')
+            } else {
+                setError(msg || 'Checkout failed')
+            }
+        } finally {
             setCheckoutBusy(false)
         }
     }
