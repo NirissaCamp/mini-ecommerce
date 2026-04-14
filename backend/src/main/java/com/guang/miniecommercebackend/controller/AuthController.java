@@ -5,6 +5,7 @@ import com.guang.miniecommercebackend.dto.LoginRequest;
 import com.guang.miniecommercebackend.dto.RegisterRequest;
 import com.guang.miniecommercebackend.service.AuthService;
 import jakarta.validation.Valid;
+import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -37,8 +38,8 @@ public class AuthController {
      * Body: JSON { "username": "...", "password": "..." }
      */
     @PostMapping("/login")
-    public AuthResponse login(@Valid @RequestBody LoginRequest request){
-        return authService.login(request);
+    public AuthResponse login(@Valid @RequestBody LoginRequest request, HttpServletRequest httpRequest){
+        return authService.login(request, httpRequest);
     }
 
     /**
@@ -57,6 +58,5 @@ public class AuthController {
                 "authorities", authorities
         );
     }
-
 
 }

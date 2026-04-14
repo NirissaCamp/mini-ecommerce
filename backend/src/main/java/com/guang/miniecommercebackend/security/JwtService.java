@@ -10,6 +10,7 @@ import javax.crypto.SecretKey;
 import java.nio.charset.StandardCharsets;
 import java.time.Instant;
 import java.util.Date;
+import java.util.List;
 
 @Service
 public class JwtService {
@@ -25,14 +26,14 @@ public class JwtService {
         this.expireMillis = expireMinutes * 60_000L;
     }
 
-//    generateToken：登录成功后生成 token（写入 subject=username、role 这类 claim）。
-    public String generateToken(String username, String role){
+//    generateToken：登录成功后生成 token（写入 subject=username、roles 这类 claim）。
+    public String generateToken(String username, List<String> roles){
         Instant now = Instant.now();
         Instant exp = now.plusMillis(expireMillis);
 
         return Jwts.builder()
                 .subject(username)
-                .claim("role",role)
+                .claim("roles", roles)
                 .issuedAt(Date.from(now))
                 .expiration(Date.from(exp))
                 .signWith(key)

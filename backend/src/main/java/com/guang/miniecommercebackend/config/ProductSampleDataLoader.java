@@ -3,10 +3,12 @@ package com.guang.miniecommercebackend.config;
 import com.guang.miniecommercebackend.entity.Product;
 import com.guang.miniecommercebackend.entity.ProductImage;
 import com.guang.miniecommercebackend.entity.ProductBullet;
+import com.guang.miniecommercebackend.entity.Role;
 import com.guang.miniecommercebackend.entity.ShippingOption;
 import com.guang.miniecommercebackend.repository.ProductRepository;
 import com.guang.miniecommercebackend.repository.ProductImageRepository;
 import com.guang.miniecommercebackend.repository.ProductBulletRepository;
+import com.guang.miniecommercebackend.repository.RoleRepository;
 import com.guang.miniecommercebackend.repository.ShippingOptionRepository;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.context.annotation.Profile;
@@ -22,19 +24,26 @@ public class ProductSampleDataLoader implements CommandLineRunner {
     private final ProductImageRepository productImageRepository;
     private final ProductBulletRepository productBulletRepository;
     private final ShippingOptionRepository shippingOptionRepository;
+    private final RoleRepository roleRepository;
 
     public ProductSampleDataLoader(ProductRepository productRepository,
                                    ProductImageRepository productImageRepository,
                                    ProductBulletRepository productBulletRepository,
-                                   ShippingOptionRepository shippingOptionRepository) {
+                                   ShippingOptionRepository shippingOptionRepository,
+                                   RoleRepository roleRepository) {
         this.productRepository = productRepository;
         this.productImageRepository = productImageRepository;
         this.productBulletRepository = productBulletRepository;
         this.shippingOptionRepository = shippingOptionRepository;
+        this.roleRepository = roleRepository;
     }
 
     @Override
     public void run(String... args) {
+        // Seed roles — required before any user can register
+        seedRoleIfAbsent("ROLE_USER", "Standard customer account");
+        seedRoleIfAbsent("ROLE_ADMIN", "Full admin access");
+
         if (productRepository.count() > 0) {
             return;
         }
@@ -131,5 +140,14 @@ public class ProductSampleDataLoader implements CommandLineRunner {
         s3.setDescription("Estimated 5-7 business days");
         s3.setIsFree(true);
         shippingOptionRepository.save(s3);
+    }
+
+    private void seedRoleIfAbsent(String roleName, String description) {
+        if (!roleRepository.existsByRoleName(roleName)) {
+            Role role = new Role();
+            role.setRoleName(roleName);
+            role.setDescription(description);
+            roleRepository.save(role);
+        }
     }
 }

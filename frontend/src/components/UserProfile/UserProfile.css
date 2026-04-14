@@ -210,3 +210,122 @@
     color: #565959;
     font-size: 0.95rem;
 }
+
+/* EmailSection */
+.profile-email__body {
+    margin-top: 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.profile-email__grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+}
+
+.profile-email__field {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+}
+
+.profile-email__label {
+    font-size: 12px;
+    color: #888;
+}
+
+.profile-email__input {
+    padding: 6px 10px;
+    border: 1px solid #ddd;
+    border-radius: 7px;
+    font-size: 14px;
+    font: inherit;
+}
+
+.profile-email__input:focus {
+    outline: none;
+    border-color: #5c6bc0;
+}
+
+.profile-email__msg--error   { color: #c62828; font-size: 13px; margin: 0; }
+.profile-email__msg--success { color: #2e7d32; font-size: 13px; margin: 0; }
+
+.profile-email__footer {
+    display: flex;
+    justify-content: flex-end;
+}
+
+.profile-email__save {
+    padding: 6px 16px;
+    border: none;
+    border-radius: 7px;
+    cursor: pointer;
+    background: #5c6bc0;
+    color: #fff;
+    font-size: 13px;
+    font: inherit;
+}
+
+.profile-email__save:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+Append at the bottom:
+    /* PasswordSection */
+.profile-password__body {
+    margin-top: 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.profile-password__field {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+}
+
+.profile-password__label {
+    font-size: 12px;
+    color: #888;
+}
+
+.profile-password__input {
+    padding: 6px 10px;
+    border: 1px solid #ddd;
+    border-radius: 7px;
+    font-size: 14px;
+    font: inherit;
+}
+
+.profile-password__input:focus {
+    outline: none;
+    border-color: #5c6bc0;
+}
+
+.profile-password__msg--error   { color: #c62828; font-size: 13px; margin: 0; }
+.profile-password__msg--success { color: #2e7d32; font-size: 13px; margin: 0; }
+
+.profile-password__footer {
+    display: flex;
+    justify-content: flex-end;
+}
+
+.profile-password__save {
+    padding: 6px 16px;
+    border: none;
+    border-radius: 7px;
+    cursor: pointer;
+    background: #5c6bc0;
+    color: #fff;
+    font-size: 13px;
+    font: inherit;
+}
+
+.profile-password__save:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
