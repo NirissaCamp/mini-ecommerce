@@ -164,11 +164,11 @@ export default function Header({ onOpenAuth, userName, onLogout, isAdmin, cartCo
                                     type="button"
                                     className="site-header__account-menu-profile"
                                     onClick={() => {
-                                        navigate('/admin/products')
+                                        navigate('/admin/dashboard')
                                         setAccountMenuOpen(false)
                                     }}
                                 >
-                                    Admin · Products
+                                    Admin Panel
                                 </button>
                             )}
 

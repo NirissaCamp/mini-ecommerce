@@ -10,4 +10,6 @@ public interface UserLoginLogRepository extends JpaRepository<UserLoginLog, Long
     List<UserLoginLog> findByUserIdOrderByLoginTimeDesc(Long userId);
 
     List<UserLoginLog> findByUserIdAndSuccessFlagOrderByLoginTimeDesc(Long userId, Boolean successFlag);
+
+    List<UserLoginLog> findAllByOrderByLoginTimeDesc();
 }

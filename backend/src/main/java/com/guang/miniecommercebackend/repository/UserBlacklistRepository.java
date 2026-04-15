@@ -12,4 +12,6 @@ public interface UserBlacklistRepository extends JpaRepository<UserBlacklist, Lo
     boolean existsByUserId(Long userId);
 
     void deleteByUserId(Long userId);
+
+    List<UserBlacklist> findAllByOrderByCreatedAtDesc();
 }

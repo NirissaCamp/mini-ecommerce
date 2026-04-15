@@ -21,6 +21,9 @@ public class UserBlacklist {
     @Column(length = 500)
     private String reason;
 
+    @Column(name = "banned_by", length = 50)
+    private String bannedBy;
+
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
 
@@ -37,6 +40,9 @@ public class UserBlacklist {
 
     public String getReason() { return reason; }
     public void setReason(String reason) { this.reason = reason; }
+
+    public String getBannedBy() { return bannedBy; }
+    public void setBannedBy(String bannedBy) { this.bannedBy = bannedBy; }
 
     public LocalDateTime getCreatedAt() { return createdAt; }
     public void setCreatedAt(LocalDateTime createdAt) { this.createdAt = createdAt; }

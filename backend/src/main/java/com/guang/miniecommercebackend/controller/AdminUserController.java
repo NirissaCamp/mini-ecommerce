@@ -4,6 +4,7 @@ import com.guang.miniecommercebackend.dto.*;
 import com.guang.miniecommercebackend.entity.User;
 import com.guang.miniecommercebackend.entity.UserBlacklist;
 import com.guang.miniecommercebackend.service.AdminUserService;
+import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -122,5 +123,37 @@ public class AdminUserController {
     @GetMapping("/{id}/login-logs")
     public List<UserLoginLogResponse> getLoginLogs(@PathVariable Long id) {
         return adminUserService.getUserLoginLogs(id);
+    }
+
+    /**
+     * GET /api/admin/users/{id}/operation-logs
+     */
+    @GetMapping("/{id}/operation-logs")
+    public List<AdminOperationLogResponse> getOperationLogs(@PathVariable Long id) {
+        return adminUserService.getOperationLogs(id);
+    }
+
+    /**
+     * GET /api/admin/operation-logs  — global, all users
+     */
+    @GetMapping("/operation-logs")
+    public List<AdminOperationLogResponse> getAllOperationLogs() {
+        return adminUserService.getAllOperationLogs();
+    }
+
+    /**
+     * GET /api/admin/login-logs  — global login logs
+     */
+    @GetMapping("/login-logs")
+    public List<UserLoginLogResponse> getAllLoginLogs() {
+        return adminUserService.getAllLoginLogs();
+    }
+
+    /**
+     * GET /api/admin/users/blacklist  — all blacklist entries
+     */
+    @GetMapping("/blacklist")
+    public List<UserBlacklistResponse> getAllBlacklist() {
+        return adminUserService.getAllBlacklistEntries();
     }
 }

@@ -3,28 +3,63 @@ import {
     adminListUsers, adminCreateUser, adminUpdateUser, adminDeleteUser,
     adminBlacklistUser, adminUnblacklistUser,
     adminGetAddresses, adminGetLoginLogs, adminGetBlacklistHistory,
+    adminGetOperationLogs, adminGetAllOperationLogs, adminGetAllLoginLogs,
+    adminListRoles, adminCreateRole, adminUpdateRole, adminDeleteRole,
+    adminAddUserToRole, adminRemoveUserFromRole,
+    adminAddPermissionToRole, adminRemovePermissionFromRole,
+    adminGetAllBlacklist,
 } from '../../api/adminUsers';
 import './AdminUsersPage.css';
+
+// ── Shared badge components ───────────────────────────────────────────────────
 
 const STATUS_COLORS = {
     ACTIVE:   { color: '#1b5e20', background: '#e8f5e9' },
     INACTIVE: { color: '#424242', background: '#f5f5f5' },
     BANNED:   { color: '#b71c1c', background: '#ffebee' },
 };
-
 const ROLE_COLORS = {
     ROLE_ADMIN: { color: '#4527a0', background: '#ede7f6' },
     ROLE_USER:  { color: '#1565c0', background: '#e3f2fd' },
+};
+const ACTION_STYLES = {
+    CREATE:      { color: '#2e7d32', background: '#e8f5e9' },
+    UPDATE:      { color: '#4527a0', background: '#ede7f6' },
+    DELETE:      { color: '#b71c1c', background: '#ffebee' },
+    BLACKLIST:   { color: '#b71c1c', background: '#ffebee' },
+    UNBLACKLIST: { color: '#1565c0', background: '#e3f2fd' },
 };
 
 function StatusBadge({ status }) {
     const s = STATUS_COLORS[status] || { color: '#333', background: '#eee' };
     return <span style={{ ...s, padding: '2px 10px', borderRadius: 12, fontSize: 12, fontWeight: 600 }}>{status}</span>;
 }
-
 function RoleBadge({ role }) {
     const s = ROLE_COLORS[role] || { color: '#333', background: '#eee' };
-    return <span style={{ ...s, padding: '2px 8px', borderRadius: 10, fontSize: 11, fontWeight: 600, marginRight: 4 }}>{role.replace('ROLE_', '')}</span>;
+    return <span style={{ ...s, padding: '2px 8px', borderRadius: 10, fontSize: 11, fontWeight: 600, marginRight: 4 }}>{role}</span>;
+}
+function ActionBadge({ action }) {
+    const s = ACTION_STYLES[action] || { color: '#333', background: '#eee' };
+    return <span style={{ ...s, padding: '2px 8px', borderRadius: 10, fontSize: 11, fontWeight: 600 }}>{action}</span>;
+}
+
+const AVATAR_COLORS = ['#5c6bc0','#26a69a','#ef5350','#ab47bc','#42a5f5','#ff7043','#66bb6a'];
+function avatarColor(name) { return AVATAR_COLORS[name.charCodeAt(0) % AVATAR_COLORS.length]; }
+
+function AvatarGroup({ users = [] }) {
+    const previews = users.slice(0, 3);
+    const extra = users.length - previews.length;
+    if (users.length === 0) return <span className="aup-cell--muted" style={{ fontSize: 13 }}>—</span>;
+    return (
+        <div className="aup-avatar-group">
+            {previews.map(u => (
+                <div key={u.id} className="aup-avatar" style={{ background: avatarColor(u.username) }} title={u.username}>
+                    {u.username[0].toUpperCase()}
+                </div>
+            ))}
+            {extra > 0 && <div className="aup-avatar aup-avatar--more">+{extra}</div>}
+        </div>
+    );
 }
 
 function Modal({ title, onClose, children }) {
@@ -41,57 +76,105 @@ function Modal({ title, onClose, children }) {
     );
 }
 
-const EMPTY_FORM = { username: '', email: '', phone: '', password: '', roleNames: ['ROLE_USER'], status: 'ACTIVE' };
+// ── Permission config (static for mini-ecommerce) ────────────────────────────
+
+const PERMISSION_CONFIG = [
+    { resource: 'Products', items: [
+        { code: 'PRODUCT_BROWSE', label: 'Browse' },
+        { code: 'PRODUCT_CREATE', label: 'Create' },
+        { code: 'PRODUCT_EDIT',   label: 'Edit' },
+        { code: 'PRODUCT_DELETE', label: 'Delete' },
+    ]},
+    { resource: 'Orders', items: [
+        { code: 'ORDER_VIEW_OWN', label: 'View Own' },
+        { code: 'ORDER_VIEW_ALL', label: 'View All' },
+        { code: 'ORDER_MANAGE',   label: 'Manage' },
+    ]},
+    { resource: 'Users', items: [
+        { code: 'USER_VIEW',      label: 'View' },
+        { code: 'USER_CREATE',    label: 'Create' },
+        { code: 'USER_EDIT',      label: 'Edit' },
+        { code: 'USER_DELETE',    label: 'Delete' },
+        { code: 'USER_BLACKLIST', label: 'Blacklist' },
+    ]},
+    { resource: 'Profile', items: [
+        { code: 'PROFILE_VIEW', label: 'View' },
+        { code: 'PROFILE_EDIT', label: 'Edit' },
+    ]},
+    { resource: 'Admin Panel', items: [
+        { code: 'ADMIN_PANEL_ACCESS', label: 'Full Access' },
+    ]},
+];
+
+// ── Main page ─────────────────────────────────────────────────────────────────
+
+const TOP_TABS = ['User Detail', 'Roles & Permissions', 'Operation Log', 'Blacklist'];
 
 export default function AdminUsersPage() {
     const token = localStorage.getItem('token');
+    const [topTab, setTopTab] = useState('User Detail');
 
-    // List
-    const [users, setUsers]               = useState([]);
-    const [loading, setLoading]           = useState(false);
-    const [listError, setListError]       = useState('');
-    const [keyword, setKeyword]           = useState('');
+    return (
+        <div className="aup-root">
+            <div className="aup-top-tabs">
+                {TOP_TABS.map(t => (
+                    <button key={t}
+                        className={`aup-top-tab ${topTab === t ? 'aup-top-tab--active' : ''}`}
+                        onClick={() => setTopTab(t)}>
+                        {t}
+                    </button>
+                ))}
+            </div>
+            <div className="aup-top-content">
+                {topTab === 'User Detail'          && <UserDetailSection token={token} />}
+                {topTab === 'Roles & Permissions'  && <RolesPermissionsSection token={token} />}
+                {topTab === 'Operation Log'        && <OperationLogSection token={token} />}
+                {topTab === 'Blacklist'            && <BlacklistSection token={token} />}
+            </div>
+        </div>
+    );
+}
+
+// ══════════════════════════════════════════════════════════════════════════════
+// TAB 1 — User Detail
+// ══════════════════════════════════════════════════════════════════════════════
+
+const EMPTY_FORM = { username: '', email: '', phone: '', password: '', roleName: 'ROLE_USER', status: 'ACTIVE', banReason: '' };
+
+function UserDetailSection({ token }) {
+    const [users, setUsers]             = useState([]);
+    const [loading, setLoading]         = useState(false);
+    const [listError, setListError]     = useState('');
+    const [keyword, setKeyword]         = useState('');
     const [statusFilter, setStatusFilter] = useState('');
     const debounceRef = useRef(null);
 
-    // Detail panel
-    const [selected, setSelected]     = useState(null);
-    const [detailTab, setDetailTab]   = useState('info');
-    const [addresses, setAddresses]   = useState([]);
-    const [addrLoaded, setAddrLoaded] = useState(false);
-    const [loginLogs, setLoginLogs]   = useState([]);
-    const [logsLoaded, setLogsLoaded] = useState(false);
-    const [blHistory, setBlHistory]   = useState([]);
-    const [blLoaded, setBlLoaded]     = useState(false);
-    const [subLoading, setSubLoading] = useState(false);
+    const [selected, setSelected]       = useState(null);
+    const [detailTab, setDetailTab]     = useState('info');
+    const [addresses, setAddresses]     = useState([]);
+    const [addrLoaded, setAddrLoaded]   = useState(false);
+    const [opLogs, setOpLogs]           = useState([]);
+    const [opLoaded, setOpLoaded]       = useState(false);
+    const [subLoading, setSubLoading]   = useState(false);
 
-    // Blacklist modal
-    const [blModal, setBlModal]   = useState(false);
-    const [blReason, setBlReason] = useState('');
-    const [blError, setBlError]   = useState('');
-
-    // Create/Edit modal
+    const [allRoles, setAllRoles]   = useState([]);
     const [userModal, setUserModal] = useState(false);
-    const [editing, setEditing]     = useState(null);
-    const [form, setForm]           = useState(EMPTY_FORM);
+    const [editing, setEditing]   = useState(null);
+    const [form, setForm]         = useState(EMPTY_FORM);
     const [formError, setFormError] = useState('');
-    const [saving, setSaving]       = useState(false);
+    const [saving, setSaving]     = useState(false);
 
-    // ── Fetch users ──────────────────────────────────────────────
-    const fetchUsers = useCallback(async (kw, st) => {
-        setLoading(true);
-        setListError('');
-        try {
-            const data = await adminListUsers(token, { keyword: kw || undefined, status: st || undefined });
-            setUsers(data);
-        } catch (e) {
-            setListError(e.message);
-        } finally {
-            setLoading(false);
-        }
+    useEffect(() => {
+        adminListRoles(token).then(data => setAllRoles(data)).catch(() => {});
     }, [token]);
 
-    useEffect(() => { fetchUsers('', ''); }, [fetchUsers]);
+    const fetchUsers = useCallback(async (kw, st) => {
+        setLoading(true); setListError('');
+        try { setUsers(await adminListUsers(token, { keyword: kw || undefined, status: st || undefined })); }
+        catch (e) { setListError(e.message); }
+        finally { setLoading(false); }
+    }, [token]);
+
     useEffect(() => { fetchUsers(keyword, statusFilter); }, [statusFilter]);
 
     function handleKeywordChange(val) {
@@ -100,16 +183,12 @@ export default function AdminUsersPage() {
         debounceRef.current = setTimeout(() => fetchUsers(val, statusFilter), 400);
     }
 
-    // ── Select user ───────────────────────────────────────────────
     function selectUser(user) {
-        setSelected(user);
-        setDetailTab('info');
+        setSelected(user); setDetailTab('info');
         setAddresses([]); setAddrLoaded(false);
-        setLoginLogs([]); setLogsLoaded(false);
-        setBlHistory([]); setBlLoaded(false);
+        setOpLogs([]);    setOpLoaded(false);
     }
 
-    // ── Load tab data ─────────────────────────────────────────────
     async function loadTab(tab) {
         setDetailTab(tab);
         if (!selected) return;
@@ -118,75 +197,47 @@ export default function AdminUsersPage() {
             try { setAddresses(await adminGetAddresses(token, selected.id)); setAddrLoaded(true); }
             catch { } finally { setSubLoading(false); }
         }
-        if (tab === 'logs' && !logsLoaded) {
+        if (tab === 'operationLog' && !opLoaded) {
             setSubLoading(true);
-            try { setLoginLogs(await adminGetLoginLogs(token, selected.id)); setLogsLoaded(true); }
+            try { setOpLogs(await adminGetOperationLogs(token, selected.id)); setOpLoaded(true); }
             catch { } finally { setSubLoading(false); }
         }
-        if (tab === 'blacklist' && !blLoaded) {
-            setSubLoading(true);
-            try { setBlHistory(await adminGetBlacklistHistory(token, selected.id)); setBlLoaded(true); }
-            catch { } finally { setSubLoading(false); }
-        }
-    }
-
-    // ── Blacklist ─────────────────────────────────────────────────
-    async function submitBlacklist() {
-        if (!blReason.trim()) { setBlError('Reason is required'); return; }
-        setSaving(true); setBlError('');
-        try {
-            const updated = await adminBlacklistUser(token, selected.id, blReason.trim());
-            patchUser(updated);
-            setBlHistory([]);
-            setBlLoaded(false);
-            setBlModal(false); setBlReason('');
-        } catch (e) { setBlError(e.message); }
-        finally { setSaving(false); }
     }
 
     async function unblacklist() {
         setSaving(true);
-        try {
-            patchUser(await adminUnblacklistUser(token, selected.id));
-            setBlHistory([]);
-            setBlLoaded(false)
-        }
+        try { patchUser(await adminUnblacklistUser(token, selected.id)); }
         catch { } finally { setSaving(false); }
     }
 
-    // ── Create / Edit ─────────────────────────────────────────────
-    function openCreate() {
-        setEditing(null); setForm(EMPTY_FORM); setFormError(''); setUserModal(true);
-    }
-
+    function openCreate() { setEditing(null); setForm(EMPTY_FORM); setFormError(''); setUserModal(true); }
     function openEdit(user) {
         setEditing(user);
         setForm({ username: user.username, email: user.email || '', phone: user.phone || '',
-            password: '', roleNames: [...(user.roles || ['ROLE_USER'])], status: user.status });
+            password: '', roleName: (user.roles?.[0] || 'ROLE_USER'), status: user.status });
         setFormError(''); setUserModal(true);
     }
-
-    function toggleRole(role) {
-        setForm(f => ({
-            ...f,
-            roleNames: f.roleNames.includes(role) ? f.roleNames.filter(r => r !== role) : [...f.roleNames, role],
-        }));
-    }
-
     async function submitUserForm() {
         setFormError('');
         if (!editing && !form.username.trim()) { setFormError('Username is required'); return; }
         if (!editing && !form.password.trim()) { setFormError('Password is required'); return; }
-        if (form.roleNames.length === 0) { setFormError('Select at least one role'); return; }
+        if (!form.roleName) { setFormError('Select a role'); return; }
+        const transitioningToBanned = editing && form.status === 'BANNED' && editing.status !== 'BANNED';
+        if (transitioningToBanned && !form.banReason.trim()) { setFormError('Please provide a reason for banning'); return; }
         setSaving(true);
         try {
-            const body = { email: form.email || null, phone: form.phone || null,
-                roleNames: form.roleNames, status: form.status };
-            if (!editing) { body.username = form.username.trim(); body.password = form.password; }
+            const body = { email: form.email || null, phone: form.phone || null, roleNames: [form.roleName] };
+            if (!editing) { body.username = form.username.trim(); body.password = form.password; body.status = form.status; }
             if (editing && form.password) body.password = form.password;
+            if (editing && !transitioningToBanned) body.status = form.status;
 
             if (editing) {
-                patchUser(await adminUpdateUser(token, editing.id, body));
+                const updated = await adminUpdateUser(token, editing.id, body);
+                if (transitioningToBanned) {
+                    patchUser(await adminBlacklistUser(token, editing.id, form.banReason.trim()));
+                } else {
+                    patchUser(updated);
+                }
             } else {
                 const created = await adminCreateUser(token, body);
                 setUsers(prev => [created, ...prev]);
@@ -195,8 +246,6 @@ export default function AdminUsersPage() {
         } catch (e) { setFormError(e.message); }
         finally { setSaving(false); }
     }
-
-    // ── Delete ────────────────────────────────────────────────────
     async function deleteUser(user) {
         if (!window.confirm(`Delete user "${user.username}"? This cannot be undone.`)) return;
         try {
@@ -205,21 +254,19 @@ export default function AdminUsersPage() {
             if (selected?.id === user.id) setSelected(null);
         } catch (e) { alert(e.message); }
     }
-
     function patchUser(updated) {
         setUsers(prev => prev.map(u => u.id === updated.id ? updated : u));
         setSelected(updated);
     }
 
-    // ── Render ────────────────────────────────────────────────────
     return (
-        <div className="aup-root">
+        <>
             {/* Toolbar */}
             <div className="aup-toolbar">
                 <h1 className="aup-title">Users</h1>
                 <div className="aup-toolbar-right">
                     <input className="aup-search" placeholder="Search username…"
-                           value={keyword} onChange={e => handleKeywordChange(e.target.value)} />
+                        value={keyword} onChange={e => handleKeywordChange(e.target.value)} />
                     <select className="aup-filter" value={statusFilter} onChange={e => setStatusFilter(e.target.value)}>
                         <option value="">All statuses</option>
                         <option value="ACTIVE">Active</option>
@@ -232,44 +279,40 @@ export default function AdminUsersPage() {
 
             {/* Body */}
             <div className="aup-body">
-                {/* Table */}
+                {/* User list */}
                 <div className={`aup-table-wrap ${selected ? 'aup-table-wrap--split' : ''}`}>
                     {listError && <div className="aup-error" style={{ padding: 16 }}>{listError}</div>}
-                    {loading ? (
-                        <div className="aup-placeholder">Loading…</div>
-                    ) : users.length === 0 ? (
-                        <div className="aup-placeholder">No users found.</div>
-                    ) : (
-                        <table className="aup-table">
-                            <thead>
-                            <tr>
-                                <th>ID</th><th>Username</th><th>Email</th>
-                                <th>Roles</th><th>Status</th><th>Joined</th><th></th>
-                            </tr>
-                            </thead>
-                            <tbody>
-                            {users.map(u => (
-                                <tr key={u.id}
-                                    className={`aup-row ${selected?.id === u.id ? 'aup-row--active' : ''}`}
-                                    onClick={() => selectUser(u)}>
-                                    <td className="aup-cell--muted">{u.id}</td>
-                                    <td><strong>{u.username}</strong></td>
-                                    <td className="aup-cell--muted">{u.email || '—'}</td>
-                                    <td>{(u.roles || []).map(r => <RoleBadge key={r} role={r} />)}</td>
-                                    <td><StatusBadge status={u.status} /></td>
-                                    <td className="aup-cell--muted">
-                                        {u.createdAt ? new Date(u.createdAt).toLocaleDateString() : '—'}
-                                    </td>
-                                    <td onClick={e => e.stopPropagation()}>
-                                        <button className="aup-btn aup-btn--sm" onClick={() => openEdit(u)}>Edit</button>
-                                        {' '}
-                                        <button className="aup-btn aup-btn--sm aup-btn--danger" onClick={() => deleteUser(u)}>Delete</button>
-                                    </td>
-                                </tr>
-                            ))}
-                            </tbody>
-                        </table>
-                    )}
+                    {loading ? <div className="aup-placeholder">Loading…</div>
+                        : users.length === 0 ? <div className="aup-placeholder">No users found.</div>
+                        : (
+                            <table className="aup-table">
+                                <thead><tr>
+                                    <th>ID</th><th>Username</th><th>Email</th>
+                                    <th>Roles</th><th>Status</th><th>Joined</th><th></th>
+                                </tr></thead>
+                                <tbody>
+                                {users.map(u => (
+                                    <tr key={u.id}
+                                        className={`aup-row ${selected?.id === u.id ? 'aup-row--active' : ''}`}
+                                        onClick={() => selectUser(u)}>
+                                        <td className="aup-cell--muted">{u.id}</td>
+                                        <td><strong>{u.username}</strong></td>
+                                        <td className="aup-cell--muted">{u.email || '—'}</td>
+                                        <td>{(u.roles || []).map(r => <RoleBadge key={r} role={r} />)}</td>
+                                        <td><StatusBadge status={u.status} /></td>
+                                        <td className="aup-cell--muted">
+                                            {u.createdAt ? new Date(u.createdAt).toLocaleDateString() : '—'}
+                                        </td>
+                                        <td onClick={e => e.stopPropagation()}>
+                                            <button className="aup-btn aup-btn--sm" onClick={() => openEdit(u)}>Edit</button>
+                                            {' '}
+                                            <button className="aup-btn aup-btn--sm aup-btn--danger" onClick={() => deleteUser(u)}>Delete</button>
+                                        </td>
+                                    </tr>
+                                ))}
+                                </tbody>
+                            </table>
+                        )}
                 </div>
 
                 {/* Detail panel */}
@@ -289,76 +332,71 @@ export default function AdminUsersPage() {
 
                         <div className="aup-detail-actions">
                             <button className="aup-btn aup-btn--sm" onClick={() => openEdit(selected)}>Edit</button>
-                            {selected.blacklisted ? (
-                                <button className="aup-btn aup-btn--sm aup-btn--success" onClick={unblacklist} disabled={saving}>Unblacklist</button>
-                            ) : (
-                                <button className="aup-btn aup-btn--sm aup-btn--danger" onClick={() => { setBlError(''); setBlReason(''); setBlModal(true); }}>Blacklist</button>
-                            )}
+                            {selected.blacklisted &&
+                                <button className="aup-btn aup-btn--sm aup-btn--success" onClick={unblacklist} disabled={saving}>Unblacklist</button>}
                             <button className="aup-btn aup-btn--sm aup-btn--danger" onClick={() => deleteUser(selected)}>Delete</button>
                         </div>
 
                         <div className="aup-tabs">
-                            {[['info','Info'],['addresses','Addresses'],['logs','Login Logs'],['blacklist','Blacklist']].map(([t, label]) => (
-                                <button key={t} className={`aup-tab ${detailTab === t ? 'aup-tab--active' : ''}`} onClick={() => loadTab(t)}>{label}</button>
+                            {[['info', 'Info'], ['addresses', 'Addresses'], ['operationLog', 'Operation Log']].map(([t, label]) => (
+                                <button key={t} className={`aup-tab ${detailTab === t ? 'aup-tab--active' : ''}`}
+                                    onClick={() => loadTab(t)}>{label}</button>
                             ))}
                         </div>
 
                         <div className="aup-tab-content">
                             {subLoading ? <div className="aup-placeholder">Loading…</div>
-                                : detailTab === 'info'      ? <InfoTab user={selected} />
-                                    : detailTab === 'addresses' ? <AddressesTab addresses={addresses} />
-                                        : detailTab === 'logs'      ? <LogsTab logs={loginLogs} />
-                                            :                             <BlacklistTab history={blHistory} />}
+                                : detailTab === 'info'         ? <InfoTab user={selected} />
+                                : detailTab === 'addresses'    ? <AddressesTab addresses={addresses} />
+                                :                               <UserOperationLogTab logs={opLogs} />}
                         </div>
                     </div>
                 )}
             </div>
 
-            {/* Blacklist modal */}
-            {blModal && (
-                <Modal title="Blacklist User" onClose={() => setBlModal(false)}>
-                    <p style={{ color: '#555', marginBottom: 12 }}>
-                        Banning <strong>{selected?.username}</strong>. Please provide a reason:
-                    </p>
-                    <textarea className="aup-textarea" rows={3} value={blReason}
-                              onChange={e => setBlReason(e.target.value)} placeholder="e.g. Fraudulent activity" />
-                    {blError && <div className="aup-error">{blError}</div>}
-                    <div className="aup-modal-footer">
-                        <button className="aup-btn" onClick={() => setBlModal(false)}>Cancel</button>
-                        <button className="aup-btn aup-btn--danger" onClick={submitBlacklist} disabled={saving}>
-                            {saving ? 'Banning…' : 'Confirm Ban'}
-                        </button>
-                    </div>
-                </Modal>
-            )}
-
-            {/* Create / Edit modal */}
+            {/* Create/Edit modal */}
             {userModal && (
                 <Modal title={editing ? `Edit — ${editing.username}` : 'Create User'} onClose={() => setUserModal(false)}>
                     <div className="aup-form">
-                        {!editing && (<><label>Username *</label><input className="aup-input" value={form.username} onChange={e => setForm(f => ({ ...f, username: e.target.value }))}
-                        /></>)}
+                        {!editing && (<><label>Username *</label>
+                            <input className="aup-input" value={form.username}
+                                onChange={e => setForm(f => ({ ...f, username: e.target.value }))} /></>)}
                         <label>Email</label>
-                        <input className="aup-input" value={form.email} onChange={e => setForm(f => ({ ...f, email: e.target.value }))} />
+                        <input className="aup-input" value={form.email}
+                            onChange={e => setForm(f => ({ ...f, email: e.target.value }))} />
                         <label>Phone</label>
-                        <input className="aup-input" value={form.phone} onChange={e => setForm(f => ({ ...f, phone: e.target.value }))} />
+                        <input className="aup-input" value={form.phone}
+                            onChange={e => setForm(f => ({ ...f, phone: e.target.value }))} />
                         <label>{editing ? 'New Password (leave blank to keep)' : 'Password *'}</label>
-                        <input className="aup-input" type="password" value={form.password} onChange={e => setForm(f => ({ ...f, password: e.target.value }))} />
-                        <label>Roles</label>
+                        <input className="aup-input" type="password" value={form.password}
+                            onChange={e => setForm(f => ({ ...f, password: e.target.value }))} />
+                        <label>Role</label>
                         <div className="aup-checkboxes">
-                            {['ROLE_USER', 'ROLE_ADMIN'].map(r => (
-                                <label key={r} className="aup-checkbox-label">
-                                    <input type="checkbox" checked={form.roleNames.includes(r)} onChange={() => toggleRole(r)} />
-                                    {r.replace('ROLE_', '')}
+                            {allRoles.map(r => (
+                                <label key={r.roleName} className="aup-checkbox-label">
+                                    <input type="radio" name="roleName" value={r.roleName}
+                                        checked={form.roleName === r.roleName}
+                                        onChange={() => setForm(f => ({ ...f, roleName: r.roleName }))} />
+                                    {r.roleName}
                                 </label>
                             ))}
                         </div>
-                        {editing && (<><label>Status</label>
-                            <select className="aup-input" value={form.status} onChange={e => setForm(f => ({ ...f, status: e.target.value }))}>
+                        {editing && (<>
+                            <label>Status</label>
+                            <select className="aup-input" value={form.status}
+                                onChange={e => setForm(f => ({ ...f, status: e.target.value, banReason: '' }))}>
                                 <option value="ACTIVE">Active</option>
                                 <option value="INACTIVE">Inactive</option>
                                 <option value="BANNED">Banned</option>
-                            </select></>)}
+                            </select>
+                            {form.status === 'BANNED' && editing.status !== 'BANNED' && (<>
+                                <label style={{ color: '#c62828' }}>Ban Reason *</label>
+                                <textarea className="aup-textarea" rows={3}
+                                    placeholder="Provide a reason for banning this user…"
+                                    value={form.banReason}
+                                    onChange={e => setForm(f => ({ ...f, banReason: e.target.value }))} />
+                            </>)}
+                        </>)}
                     </div>
                     {formError && <div className="aup-error">{formError}</div>}
                     <div className="aup-modal-footer">
@@ -369,11 +407,533 @@ export default function AdminUsersPage() {
                     </div>
                 </Modal>
             )}
+        </>
+    );
+}
+
+// ══════════════════════════════════════════════════════════════════════════════
+// TAB 2 — Roles & Permissions
+// ══════════════════════════════════════════════════════════════════════════════
+
+function RolesPermissionsSection({ token }) {
+    const [roles, setRoles]               = useState([]);
+    const [loading, setLoading]           = useState(false);
+    const [selectedRole, setSelectedRole] = useState(null);
+    const [expandedRole, setExpandedRole] = useState(null); // role id with expanded user list
+    const [roleModal, setRoleModal]       = useState(false);
+    const [editingRole, setEditingRole]   = useState(null);
+    const [addUserModal, setAddUserModal] = useState(false);
+    const [roleForm, setRoleForm]         = useState({ name: '', desc: '' });
+    const [addUserId, setAddUserId]       = useState('');
+    const [modalError, setModalError]     = useState('');
+    const [saving, setSaving]             = useState(false);
+    const [togglingPerm, setTogglingPerm] = useState(null);
+
+    async function loadRoles() {
+        setLoading(true);
+        try {
+            const data = await adminListRoles(token);
+            setRoles(data);
+            if (data.length) setSelectedRole(prev => data.find(r => r.id === prev?.id) || data[0]);
+        } catch { } finally { setLoading(false); }
+    }
+
+    useEffect(() => { loadRoles(); }, []);
+
+    function openCreate() {
+        setEditingRole(null); setRoleForm({ name: '', desc: '' }); setModalError(''); setRoleModal(true);
+    }
+    function openEdit(role) {
+        setEditingRole(role); setRoleForm({ name: role.roleName, desc: role.description || '' });
+        setModalError(''); setRoleModal(true);
+    }
+
+    async function submitRoleForm() {
+        if (!roleForm.name.trim()) { setModalError('Role name is required'); return; }
+        setSaving(true); setModalError('');
+        try {
+            if (editingRole) {
+                const updated = await adminUpdateRole(token, editingRole.id, roleForm.name.trim(), roleForm.desc.trim());
+                setRoles(prev => prev.map(r => r.id === updated.id ? updated : r));
+                if (selectedRole?.id === updated.id) setSelectedRole(updated);
+            } else {
+                const name = roleForm.name.trim().toUpperCase().startsWith('ROLE_')
+                    ? roleForm.name.trim() : `ROLE_${roleForm.name.trim().toUpperCase()}`;
+                const created = await adminCreateRole(token, name, roleForm.desc.trim());
+                setRoles(prev => [...prev, created]);
+            }
+            setRoleModal(false);
+        } catch (e) { setModalError(e.message); }
+        finally { setSaving(false); }
+    }
+
+    async function handleDeleteRole(role) {
+        if (!window.confirm(`Delete role "${role.roleName}"?`)) return;
+        try {
+            await adminDeleteRole(token, role.id);
+            setRoles(prev => prev.filter(r => r.id !== role.id));
+            if (selectedRole?.id === role.id) setSelectedRole(null);
+            if (expandedRole === role.id) setExpandedRole(null);
+        } catch (e) { alert(e.message); }
+    }
+
+    async function removeUserFromRole(roleId, userId) {
+        try {
+            const updated = await adminRemoveUserFromRole(token, roleId, userId);
+            setRoles(prev => prev.map(r => r.id === updated.id ? updated : r));
+            if (selectedRole?.id === updated.id) setSelectedRole(updated);
+        } catch (e) { alert(e.message); }
+    }
+
+    async function submitAddUser() {
+        const id = parseInt(addUserId);
+        if (!id) { setModalError('Enter a valid user ID'); return; }
+        setSaving(true); setModalError('');
+        try {
+            const updated = await adminAddUserToRole(token, selectedRole.id, id);
+            setRoles(prev => prev.map(r => r.id === updated.id ? updated : r));
+            if (selectedRole?.id === updated.id) setSelectedRole(updated);
+            setAddUserModal(false); setAddUserId('');
+        } catch (e) { setModalError(e.message); }
+        finally { setSaving(false); }
+    }
+
+    async function togglePermission(permissionCode, currentlyEnabled) {
+        if (togglingPerm) return;
+        setTogglingPerm(permissionCode);
+        try {
+            const updated = currentlyEnabled
+                ? await adminRemovePermissionFromRole(token, selectedRole.id, permissionCode)
+                : await adminAddPermissionToRole(token, selectedRole.id, permissionCode);
+            setSelectedRole(updated);
+            setRoles(prev => prev.map(r => r.id === updated.id ? updated : r));
+        } catch (e) { alert(e.message); }
+        finally { setTogglingPerm(null); }
+    }
+
+    const enabledCodes = new Set((selectedRole?.permissions || []).map(p => p.permissionCode));
+
+    return (
+        <div className="aup-rp-root">
+            {/* Left — Roles table */}
+            <div className="aup-rp-left">
+                <div className="aup-rp-panel-header">
+                    <span className="aup-rp-panel-title">Roles List</span>
+                    <button className="aup-btn aup-btn--sm aup-btn--primary" onClick={openCreate}>+ Create New Role</button>
+                </div>
+                {loading ? <div className="aup-placeholder">Loading…</div> : (
+                    <table className="aup-table">
+                        <thead><tr>
+                            <th>Role Name</th><th>Description</th><th>Users Count</th><th>Actions</th>
+                        </tr></thead>
+                        <tbody>
+                        {roles.map(r => {
+                            const expanded = expandedRole === r.id;
+                            return (
+                                <>
+                                <tr key={r.id}
+                                    className={`aup-row ${selectedRole?.id === r.id ? 'aup-row--active' : ''}`}
+                                    onClick={() => setSelectedRole(r)}>
+                                    <td>
+                                        <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                                            <button className="aup-expand-btn"
+                                                onClick={e => { e.stopPropagation(); setExpandedRole(expanded ? null : r.id); }}
+                                                title={expanded ? 'Collapse' : 'Show users'}>
+                                                {expanded ? '▾' : '▸'}
+                                            </button>
+                                            <RoleBadge role={r.roleName} />
+                                        </div>
+                                    </td>
+                                    <td className="aup-cell--muted" style={{ fontSize: 13 }}>{r.description || '—'}</td>
+                                    <td><AvatarGroup users={r.users || []} /></td>
+                                    <td onClick={e => e.stopPropagation()} style={{ whiteSpace: 'nowrap' }}>
+                                        <button className="aup-btn aup-btn--sm" title="Edit" onClick={() => openEdit(r)}>✏️</button>
+                                        {' '}
+                                        <button className="aup-btn aup-btn--sm aup-btn--danger" title="Delete"
+                                            onClick={() => handleDeleteRole(r)}>🗑️</button>
+                                    </td>
+                                </tr>
+                                {expanded && (
+                                    <tr key={`${r.id}-users`} className="aup-expanded-row">
+                                        <td colSpan={4}>
+                                            {r.users?.length === 0
+                                                ? <span className="aup-cell--muted">No users assigned</span>
+                                                : <div className="aup-user-chip-list">
+                                                    {r.users.map(u => (
+                                                        <span key={u.id} className="aup-user-chip">
+                                                            {u.username}
+                                                            <button className="aup-user-chip-remove"
+                                                                onClick={() => removeUserFromRole(r.id, u.id)}>×</button>
+                                                        </span>
+                                                    ))}
+                                                </div>
+                                            }
+                                        </td>
+                                    </tr>
+                                )}
+                                </>
+                            );
+                        })}
+                        </tbody>
+                    </table>
+                )}
+                {selectedRole && (
+                    <div style={{ padding: '10px 14px', borderTop: '1px solid #eee' }}>
+                        <button className="aup-btn aup-btn--sm" style={{ width: '100%' }}
+                            onClick={() => { setModalError(''); setAddUserId(''); setAddUserModal(true); }}>
+                            + Add User to {selectedRole.roleName}
+                        </button>
+                    </div>
+                )}
+            </div>
+
+            {/* Right — Permissions */}
+            <div className="aup-rp-right">
+                {!selectedRole ? <div className="aup-placeholder">Select a role to view permissions</div> : (
+                    <>
+                        <div className="aup-rp-panel-header">
+                            <span className="aup-rp-panel-title">Permissions — {selectedRole.roleName}</span>
+                        </div>
+                        <table className="aup-table">
+                            <thead><tr><th>Resource</th><th>Permissions</th></tr></thead>
+                            <tbody>
+                            {PERMISSION_CONFIG.map(group => (
+                                <tr key={group.resource}>
+                                    <td style={{ fontWeight: 600, fontSize: 13, verticalAlign: 'middle' }}>{group.resource}</td>
+                                    <td>
+                                        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px 16px' }}>
+                                            {group.items.map(item => {
+                                                const enabled = enabledCodes.has(item.code);
+                                                const busy = togglingPerm === item.code;
+                                                return (
+                                                    <label key={item.code} className="aup-perm-checkbox-label"
+                                                        style={{ opacity: busy ? 0.5 : 1 }}>
+                                                        <input type="checkbox" checked={enabled} disabled={busy}
+                                                            onChange={() => togglePermission(item.code, enabled)} />
+                                                        {item.label}
+                                                    </label>
+                                                );
+                                            })}
+                                        </div>
+                                    </td>
+                                </tr>
+                            ))}
+                            </tbody>
+                        </table>
+                    </>
+                )}
+            </div>
+
+            {/* Create / Edit Role modal */}
+            {roleModal && (
+                <Modal title={editingRole ? `Edit — ${editingRole.roleName}` : 'Create New Role'}
+                    onClose={() => setRoleModal(false)}>
+                    <div className="aup-form">
+                        <label>Role Name *</label>
+                        <input className="aup-input" placeholder="e.g. ROLE_MANAGER"
+                            value={roleForm.name} onChange={e => setRoleForm(f => ({ ...f, name: e.target.value }))} />
+                        <label>Description</label>
+                        <input className="aup-input" placeholder="Optional description"
+                            value={roleForm.desc} onChange={e => setRoleForm(f => ({ ...f, desc: e.target.value }))} />
+                    </div>
+                    {modalError && <div className="aup-error">{modalError}</div>}
+                    <div className="aup-modal-footer">
+                        <button className="aup-btn" onClick={() => setRoleModal(false)}>Cancel</button>
+                        <button className="aup-btn aup-btn--primary" onClick={submitRoleForm} disabled={saving}>
+                            {saving ? 'Saving…' : editingRole ? 'Save Changes' : 'Create Role'}
+                        </button>
+                    </div>
+                </Modal>
+            )}
+
+            {/* Add User to Role modal */}
+            {addUserModal && (
+                <Modal title={`Add User to ${selectedRole?.roleName}`} onClose={() => setAddUserModal(false)}>
+                    <div className="aup-form">
+                        <label>User ID *</label>
+                        <input className="aup-input" type="number" placeholder="Enter user ID"
+                            value={addUserId} onChange={e => setAddUserId(e.target.value)} />
+                    </div>
+                    {modalError && <div className="aup-error">{modalError}</div>}
+                    <div className="aup-modal-footer">
+                        <button className="aup-btn" onClick={() => setAddUserModal(false)}>Cancel</button>
+                        <button className="aup-btn aup-btn--primary" onClick={submitAddUser} disabled={saving}>
+                            {saving ? 'Adding…' : 'Add User'}
+                        </button>
+                    </div>
+                </Modal>
+            )}
         </div>
     );
 }
 
-// ── Tab content components ───────────────────────────────────────────────────
+// ══════════════════════════════════════════════════════════════════════════════
+// TAB 3 — Operation Log (global)
+// ══════════════════════════════════════════════════════════════════════════════
+
+const ALL_ACTIONS = ['CREATE', 'UPDATE', 'DELETE', 'BLACKLIST', 'UNBLACKLIST'];
+
+function OperationLogSection({ token }) {
+    const [subTab, setSubTab]       = useState('admin');
+    const [adminLogs, setAdminLogs] = useState([]);
+    const [loginLogs, setLoginLogs] = useState([]);
+    const [loading, setLoading]     = useState(false);
+    const [loaded, setLoaded]       = useState({ admin: false, login: false });
+
+    // Admin ops filters
+    const [dateFrom, setDateFrom]         = useState('');
+    const [dateTo, setDateTo]             = useState('');
+    const [activeActions, setActiveActions] = useState(new Set(ALL_ACTIONS));
+    const [operatorKw, setOperatorKw]     = useState('');
+
+    // User behavior filters
+    const [lDateFrom, setLDateFrom] = useState('');
+    const [lDateTo, setLDateTo]     = useState('');
+    const [userKw, setUserKw]       = useState('');
+    const [ipKw, setIpKw]           = useState('');
+    const [resultFilter, setResultFilter] = useState('');
+
+    async function loadAdminLogs() {
+        if (loaded.admin) return;
+        setLoading(true);
+        try { setAdminLogs(await adminGetAllOperationLogs(token)); setLoaded(p => ({ ...p, admin: true })); }
+        catch { } finally { setLoading(false); }
+    }
+
+    async function loadLoginLogs() {
+        if (loaded.login) return;
+        setLoading(true);
+        try { setLoginLogs(await adminGetAllLoginLogs(token)); setLoaded(p => ({ ...p, login: true })); }
+        catch { } finally { setLoading(false); }
+    }
+
+    useEffect(() => { loadAdminLogs(); }, []);
+
+    function switchTab(t) {
+        setSubTab(t);
+        if (t === 'admin') loadAdminLogs();
+        if (t === 'login') loadLoginLogs();
+    }
+
+    function toggleAction(action) {
+        setActiveActions(prev => {
+            const next = new Set(prev);
+            next.has(action) ? next.delete(action) : next.add(action);
+            return next;
+        });
+    }
+
+    // Filter admin logs
+    const filteredAdmin = adminLogs.filter(l => {
+        if (!activeActions.has(l.action)) return false;
+        if (operatorKw && !l.operatorUsername?.toLowerCase().includes(operatorKw.toLowerCase())) return false;
+        if (dateFrom && new Date(l.createdAt) < new Date(dateFrom)) return false;
+        if (dateTo   && new Date(l.createdAt) > new Date(dateTo + 'T23:59:59')) return false;
+        return true;
+    });
+
+    // Filter login logs
+    const filteredLogin = loginLogs.filter(l => {
+        if (userKw && !l.username?.toLowerCase().includes(userKw.toLowerCase())) return false;
+        if (ipKw   && !l.loginIp?.toLowerCase().includes(ipKw.toLowerCase())) return false;
+        if (resultFilter === 'success' && !l.successFlag) return false;
+        if (resultFilter === 'failed'  &&  l.successFlag) return false;
+        if (lDateFrom && new Date(l.loginTime) < new Date(lDateFrom)) return false;
+        if (lDateTo   && new Date(l.loginTime) > new Date(lDateTo + 'T23:59:59')) return false;
+        return true;
+    });
+
+    return (
+        <div className="aup-section">
+            <h2 className="aup-section-title">Operation Log</h2>
+            <div className="aup-tabs" style={{ marginBottom: 0 }}>
+                <button className={`aup-tab ${subTab === 'admin' ? 'aup-tab--active' : ''}`} onClick={() => switchTab('admin')}>Admin Operations</button>
+                <button className={`aup-tab ${subTab === 'login' ? 'aup-tab--active' : ''}`} onClick={() => switchTab('login')}>User Behavior</button>
+            </div>
+
+            {/* Filter bar */}
+            <div className="aup-log-filters">
+                {subTab === 'admin' ? (
+                    <>
+                        <div className="aup-log-filter-row">
+                            <div className="aup-log-filter-group">
+                                <span className="aup-log-filter-label">Date</span>
+                                <div className="aup-log-date-range">
+                                    <input type="date" className="aup-input aup-log-date" value={dateFrom} onChange={e => setDateFrom(e.target.value)} />
+                                    <span className="aup-cell--muted">—</span>
+                                    <input type="date" className="aup-input aup-log-date" value={dateTo} onChange={e => setDateTo(e.target.value)} />
+                                </div>
+                            </div>
+                            <div className="aup-log-filter-group">
+                                <span className="aup-log-filter-label">Operator</span>
+                                <div style={{ position: 'relative' }}>
+                                    <span style={{ position: 'absolute', left: 9, top: '50%', transform: 'translateY(-50%)', fontSize: 13 }}>🔍</span>
+                                    <input className="aup-input" placeholder="Operator name…" value={operatorKw}
+                                        onChange={e => setOperatorKw(e.target.value)}
+                                        style={{ paddingLeft: 28, width: 180 }} />
+                                </div>
+                            </div>
+                        </div>
+                        <div className="aup-log-filter-group">
+                            <span className="aup-log-filter-label">Action Type</span>
+                            <div className="aup-log-action-toggles">
+                                {ALL_ACTIONS.map(a => (
+                                    <button key={a}
+                                        className={`aup-log-action-btn ${activeActions.has(a) ? 'aup-log-action-btn--on' : ''}`}
+                                        style={activeActions.has(a) ? ACTION_STYLES[a] : {}}
+                                        onClick={() => toggleAction(a)}>
+                                        {a}
+                                    </button>
+                                ))}
+                            </div>
+                        </div>
+                    </>
+                ) : (
+                    <div className="aup-log-filter-row">
+                        <div className="aup-log-filter-group">
+                            <span className="aup-log-filter-label">Date</span>
+                            <div className="aup-log-date-range">
+                                <input type="date" className="aup-input aup-log-date" value={lDateFrom} onChange={e => setLDateFrom(e.target.value)} />
+                                <span className="aup-cell--muted">—</span>
+                                <input type="date" className="aup-input aup-log-date" value={lDateTo} onChange={e => setLDateTo(e.target.value)} />
+                            </div>
+                        </div>
+                        <div className="aup-log-filter-group">
+                            <span className="aup-log-filter-label">Username</span>
+                            <div style={{ position: 'relative' }}>
+                                <span style={{ position: 'absolute', left: 9, top: '50%', transform: 'translateY(-50%)', fontSize: 13 }}>🔍</span>
+                                <input className="aup-input" placeholder="Username…" value={userKw}
+                                    onChange={e => setUserKw(e.target.value)}
+                                    style={{ paddingLeft: 28, width: 150 }} />
+                            </div>
+                        </div>
+                        <div className="aup-log-filter-group">
+                            <span className="aup-log-filter-label">IP Address</span>
+                            <input className="aup-input" placeholder="IP address…" value={ipKw}
+                                onChange={e => setIpKw(e.target.value)} style={{ width: 150 }} />
+                        </div>
+                        <div className="aup-log-filter-group">
+                            <span className="aup-log-filter-label">Result</span>
+                            <select className="aup-filter" value={resultFilter} onChange={e => setResultFilter(e.target.value)}>
+                                <option value="">All</option>
+                                <option value="success">Success</option>
+                                <option value="failed">Failed</option>
+                            </select>
+                        </div>
+                    </div>
+                )}
+            </div>
+
+            <div className="aup-table-wrap" style={{ borderRadius: '0 8px 8px 8px' }}>
+                {loading ? <div className="aup-placeholder">Loading…</div>
+                    : subTab === 'admin'
+                        ? <AdminOpsTable logs={filteredAdmin} />
+                        : <LoginLogsTable logs={filteredLogin} showUser />}
+            </div>
+        </div>
+    );
+}
+
+// ══════════════════════════════════════════════════════════════════════════════
+// TAB 4 — Blacklist (global)
+// ══════════════════════════════════════════════════════════════════════════════
+
+function BlacklistSection({ token }) {
+    const [entries, setEntries] = useState([]);
+    const [loading, setLoading] = useState(false);
+    const [error, setError]     = useState('');
+    const [saving, setSaving]   = useState(null);
+    const [keyword, setKeyword] = useState('');
+
+    useEffect(() => {
+        setLoading(true);
+        adminGetAllBlacklist(token)
+            .then(setEntries)
+            .catch(e => setError(e.message))
+            .finally(() => setLoading(false));
+    }, []);
+
+    async function unblacklist(entry) {
+        if (!window.confirm(`Unblacklist "${entry.username}"?`)) return;
+        setSaving(entry.id);
+        try {
+            await adminUnblacklistUser(token, entry.userId);
+            setEntries(prev => prev.filter(e => e.userId !== entry.userId));
+        } catch (e) { alert(e.message); }
+        finally { setSaving(null); }
+    }
+
+    const kw = keyword.toLowerCase();
+    const filtered = entries.filter(e =>
+        e.username?.toLowerCase().includes(kw) ||
+        e.reason?.toLowerCase().includes(kw) ||
+        e.bannedBy?.toLowerCase().includes(kw)
+    );
+
+    const totalBanned = entries.length;
+    const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
+    const newlyBanned = entries.filter(e => e.bannedAt && new Date(e.bannedAt) >= sevenDaysAgo).length;
+
+    return (
+        <div className="aup-section">
+            {/* Stats */}
+            <div className="aup-bl-stats">
+                <div className="aup-bl-stat">
+                    <span className="aup-bl-stat-value">{totalBanned}</span>
+                    <span className="aup-bl-stat-label">Total Banned</span>
+                </div>
+                <div className="aup-bl-stat aup-bl-stat--new">
+                    <span className="aup-bl-stat-value">{newlyBanned}</span>
+                    <span className="aup-bl-stat-label">New (last 7 days)</span>
+                </div>
+            </div>
+
+            {/* Toolbar */}
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                <div style={{ position: 'relative', width: 280 }}>
+                    <span style={{ position: 'absolute', left: 10, top: '50%', transform: 'translateY(-50%)', fontSize: 14 }}>🔍</span>
+                    <input className="aup-search" placeholder="Search username, reason, banned by…"
+                        value={keyword} onChange={e => setKeyword(e.target.value)}
+                        style={{ width: '100%', paddingLeft: 30, boxSizing: 'border-box' }} />
+                </div>
+            </div>
+            {error && <div className="aup-error" style={{ padding: '8px 0' }}>{error}</div>}
+            <div className="aup-table-wrap">
+                {loading ? <div className="aup-placeholder">Loading…</div>
+                    : filtered.length === 0 ? <div className="aup-placeholder">{keyword ? 'No results match your search.' : 'No blacklisted users.'}</div>
+                    : (
+                        <table className="aup-table">
+                            <thead><tr>
+                                <th>ID</th><th>Username</th><th>Status</th>
+                                <th>Reason</th><th>Banned By</th><th>Banned At</th><th></th>
+                            </tr></thead>
+                            <tbody>
+                            {filtered.map(e => (
+                                <tr key={e.id} className="aup-row">
+                                    <td className="aup-cell--muted">{e.userId}</td>
+                                    <td><strong>{e.username}</strong></td>
+                                    <td><StatusBadge status={e.status} /></td>
+                                    <td>{e.reason || '—'}</td>
+                                    <td className="aup-cell--muted">{e.bannedBy || '—'}</td>
+                                    <td className="aup-cell--muted">{e.bannedAt ? new Date(e.bannedAt).toLocaleString() : '—'}</td>
+                                    <td>
+                                        <button className="aup-btn aup-btn--sm aup-btn--success"
+                                            disabled={saving === e.id}
+                                            onClick={() => unblacklist(e)}>
+                                            {saving === e.id ? '…' : 'Unblacklist'}
+                                        </button>
+                                    </td>
+                                </tr>
+                            ))}
+                            </tbody>
+                        </table>
+                    )}
+            </div>
+        </div>
+    );
+}
+
+// ── Shared tab content components ─────────────────────────────────────────────
 
 function InfoTab({ user }) {
     const rows = [
@@ -407,36 +967,53 @@ function AddressesTab({ addresses }) {
     );
 }
 
-function LogsTab({ logs }) {
+function UserOperationLogTab({ logs }) {
+    if (!logs.length) return <div className="aup-placeholder">No operation records.</div>;
+    return <AdminOpsTable logs={logs} />;
+}
+
+function AdminOpsTable({ logs }) {
+    if (!logs.length) return <div className="aup-placeholder">No records.</div>;
+    return (
+        <table className="aup-table aup-table--compact">
+            <thead><tr>
+                <th>Time</th><th>Operator</th><th>Target</th><th>Action</th><th>Detail</th>
+            </tr></thead>
+            <tbody>
+            {logs.map(l => (
+                <tr key={l.id} className="aup-row">
+                    <td className="aup-cell--muted">{l.createdAt ? new Date(l.createdAt).toLocaleString() : '—'}</td>
+                    <td>{l.operatorUsername}</td>
+                    <td className="aup-cell--muted">{l.targetUsername || '—'}</td>
+                    <td><ActionBadge action={l.action} /></td>
+                    <td className="aup-cell--muted">{l.detail || '—'}</td>
+                </tr>
+            ))}
+            </tbody>
+        </table>
+    );
+}
+
+function LoginLogsTable({ logs, showUser }) {
     if (!logs.length) return <div className="aup-placeholder">No login records.</div>;
     return (
-        <table className="aup-table aup-table--compact"><thead>
-        <tr><th>Time</th><th>IP</th><th>Device</th><th>Result</th></tr>
-        </thead><tbody>
-        {logs.map(l => (
-            <tr key={l.id}>
-                <td className="aup-cell--muted">{l.loginTime ? new Date(l.loginTime).toLocaleString() : '—'}</td>
-                <td>{l.loginIp || '—'}</td>
-                <td className="aup-cell--muted">{l.deviceInfo || '—'}</td>
-                <td><span style={{ color: l.successFlag ? '#2e7d32' : '#b71c1c', fontWeight: 600 }}>{l.successFlag ? 'OK' : 'Fail'}</span></td>
-            </tr>
-        ))}
-        </tbody></table>
-    );
-}
-
-function BlacklistTab({ history }) {
-    if (!history.length) return <div className="aup-placeholder">No blacklist records.</div>;
-    return (
-        <div className="aup-sub-list">
-            {history.map(b => (
-                <div key={b.id} className="aup-sub-card">
-                    <div className="aup-cell--muted" style={{ fontSize: 12 }}>{b.createdAt ? new Date(b.createdAt).toLocaleString() : '—'}</div>
-                    <div>{b.reason || 'No reason given'}</div>
-                </div>
+        <table className="aup-table aup-table--compact">
+            <thead><tr>
+                <th>Time</th>{showUser && <th>User</th>}<th>IP</th><th>Device</th><th>Result</th>
+            </tr></thead>
+            <tbody>
+            {logs.map(l => (
+                <tr key={l.id} className="aup-row">
+                    <td className="aup-cell--muted">{l.loginTime ? new Date(l.loginTime).toLocaleString() : '—'}</td>
+                    {showUser && <td>{l.username || '—'}</td>}
+                    <td className="aup-cell--muted">{l.loginIp || '—'}</td>
+                    <td className="aup-cell--muted" style={{ maxWidth: 160, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{l.deviceInfo || '—'}</td>
+                    <td>{l.successFlag
+                        ? <span style={{ color: '#2e7d32', fontWeight: 600 }}>✓ Success</span>
+                        : <span style={{ color: '#c62828', fontWeight: 600 }}>✗ Failed</span>}</td>
+                </tr>
             ))}
-        </div>
+            </tbody>
+        </table>
     );
 }
-
-
