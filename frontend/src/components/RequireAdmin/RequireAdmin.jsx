@@ -19,12 +19,7 @@ export default function RequireAdmin({ children }) {
 
         getMe(token)
             .then((data) => {
-                const auth = String(data?.authorities ?? '')
-                if (auth.includes('ROLE_ADMIN')) {
-                    setStatus('ok')
-                } else {
-                    setStatus('denied')
-                }
+                setStatus(data?.isAdmin === true ? 'ok' : 'denied')
             })
             .catch(() => {
                 setStatus('denied')

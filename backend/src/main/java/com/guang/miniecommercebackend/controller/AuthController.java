@@ -3,6 +3,7 @@ package com.guang.miniecommercebackend.controller;
 import com.guang.miniecommercebackend.dto.AuthResponse;
 import com.guang.miniecommercebackend.dto.LoginRequest;
 import com.guang.miniecommercebackend.dto.RegisterRequest;
+import com.guang.miniecommercebackend.repository.UserRepository;
 import com.guang.miniecommercebackend.service.AuthService;
 import jakarta.validation.Valid;
 import jakarta.servlet.http.HttpServletRequest;
@@ -18,8 +19,11 @@ import java.util.stream.Collectors;
 @RequestMapping("/api/auth")
 public class AuthController {
     private final AuthService authService;
-    public AuthController(AuthService authService){
+    private final UserRepository userRepository;
+
+    public AuthController(AuthService authService, UserRepository userRepository) {
         this.authService = authService;
+        this.userRepository = userRepository;
     }
 
     /**
@@ -47,15 +51,19 @@ public class AuthController {
      * GET /api/auth/me — 需在请求头带上 Bearer Token，由 JwtAuthenticationFilter 写入登录态。
      */
     @GetMapping("/me")
-    public Map<String, String> me() {
+    public Map<String, Object> me() {
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
         String username = (String) auth.getPrincipal();
         String authorities = auth.getAuthorities().stream()
                 .map(GrantedAuthority::getAuthority)
                 .collect(Collectors.joining(","));
+        boolean isAdmin = userRepository.findByUsername(username)
+                .map(u -> u.getRoles().stream().anyMatch(r -> r.isAdminRole() || "ROLE_ADMIN".equals(r.getRoleName())))
+                .orElse(false);
         return Map.of(
                 "username", username,
-                "authorities", authorities
+                "authorities", authorities,
+                "isAdmin", isAdmin
         );
     }
 

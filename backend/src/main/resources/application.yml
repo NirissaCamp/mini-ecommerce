@@ -3,7 +3,7 @@ spring:
     profiles:
         active: local
     datasource:
-        url: jdbc:mysql://localhost:3306/mini_ecommerce?useSSL=false&serverTimezone=UTC&characterEncoding=UTF-8
+        url: jdbc:mysql://localhost:3306/mini_ecommerce?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC&characterEncoding=UTF-8
         username: root
         password: YOUR_DB_PASSWORD
     jpa:

@@ -107,10 +107,12 @@ public class AdminUserService {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "email already in use");
         }
 
-        if (req.getEmail() != null)   user.setEmail(req.getEmail());
-        if (req.getPhone() != null)   user.setPhone(req.getPhone());
-        if (req.getStatus() != null)  user.setStatus(req.getStatus());
-        if (req.getLevelId() != null) user.setLevelId(req.getLevelId());
+        if (req.getEmail() != null)    user.setEmail(req.getEmail());
+        if (req.getPhone() != null)    user.setPhone(req.getPhone());
+        if (req.getPassword() != null && !req.getPassword().isBlank())
+            user.setPasswordHash(passwordEncoder.encode(req.getPassword()));
+        if (req.getStatus() != null)   user.setStatus(req.getStatus());
+        if (req.getLevelId() != null)  user.setLevelId(req.getLevelId());
         if (req.getRoleNames() != null) user.setRoles(resolveRoles(req.getRoleNames()));
 
         User saved = userRepository.save(user);
@@ -123,7 +125,18 @@ public class AdminUserService {
     @Transactional
     public void deleteUser(Long id) {
         User user = getByIdOr404(id);
-        log(user, AdminOperationLog.ActionType.DELETE, "User deleted: " + user.getUsername());
+        String username = user.getUsername();
+        // Clear all FK references to this user before deletion
+        operationLogRepository.clearTargetUser(id);
+        userBlacklistRepository.deleteByUserId(id);
+        userLoginLogRepository.deleteByUserId(id);
+        // Save the log with no user reference (username preserved in detail)
+        String operator = SecurityContextHolder.getContext().getAuthentication().getName();
+        AdminOperationLog entry = new AdminOperationLog();
+        entry.setOperatorUsername(operator);
+        entry.setAction(AdminOperationLog.ActionType.DELETE);
+        entry.setDetail("User deleted: " + username);
+        operationLogRepository.save(entry);
         userRepository.delete(user);
     }
 
@@ -246,18 +259,19 @@ public class AdminUserService {
     }
 
     @Transactional
-    public RoleResponse createRole(String roleName, String description) {
+    public RoleResponse createRole(String roleName, String description, boolean isAdminRole) {
         if (roleRepository.existsByRoleName(roleName)) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Role already exists: " + roleName);
         }
         Role role = new Role();
         role.setRoleName(roleName);
         role.setDescription(description);
+        role.setAdminRole(isAdminRole);
         return toRoleResponse(roleRepository.save(role));
     }
 
     @Transactional
-    public RoleResponse updateRole(Long id, String roleName, String description) {
+    public RoleResponse updateRole(Long id, String roleName, String description, boolean isAdminRole) {
         Role role = roleRepository.findById(id)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "role not found"));
         if (roleName != null && !roleName.isBlank()) {
@@ -267,6 +281,7 @@ public class AdminUserService {
             role.setRoleName(roleName);
         }
         if (description != null) role.setDescription(description);
+        role.setAdminRole(isAdminRole);
         return toRoleResponse(roleRepository.save(role));
     }
 
@@ -352,7 +367,7 @@ public class AdminUserService {
                 .map(u -> new UserSummaryResponse(u.getId(), u.getUsername()))
                 .toList();
         return new RoleResponse(
-                r.getId(), r.getRoleName(), r.getDescription(),
+                r.getId(), r.getRoleName(), r.getDescription(), r.isAdminRole(),
                 users.size(), users,
                 r.getPermissions().stream()
                         .map(p -> new PermissionResponse(p.getId(), p.getPermissionCode(), p.getPermissionName()))

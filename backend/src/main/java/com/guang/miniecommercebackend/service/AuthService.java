@@ -73,6 +73,11 @@ public AuthResponse login(LoginRequest req, HttpServletRequest httpRequest){
     if (!passwordEncoder.matches(req.getPassword(), user.getPasswordHash())){
         throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "invalid username or password");
     }
+
+    if (user.getStatus() == User.UserStatus.BANNED) {
+        throw new ResponseStatusException(HttpStatus.FORBIDDEN, "your account has been banned");
+    }
+
     UserLoginLog log = new UserLoginLog();
     log.setUser(user);
     log.setLoginTime(LocalDateTime.now());

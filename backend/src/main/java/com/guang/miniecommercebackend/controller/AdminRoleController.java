@@ -28,19 +28,23 @@ public class AdminRoleController {
         return adminUserService.listRoles();
     }
 
-    /** POST /api/admin/roles  Body: { "roleName": "ROLE_X", "description": "..." } */
+    /** POST /api/admin/roles  Body: { "roleName": "ROLE_X", "description": "...", "isAdminRole": true } */
     @PostMapping
-    public ResponseEntity<RoleResponse> createRole(@RequestBody Map<String, String> body) {
-        String roleName = body.get("roleName");
-        String description = body.get("description");
+    public ResponseEntity<RoleResponse> createRole(@RequestBody Map<String, Object> body) {
+        String roleName = (String) body.get("roleName");
+        String description = (String) body.get("description");
+        boolean isAdminRole = Boolean.TRUE.equals(body.get("isAdminRole"));
         return ResponseEntity.status(HttpStatus.CREATED)
-                .body(adminUserService.createRole(roleName, description));
+                .body(adminUserService.createRole(roleName, description, isAdminRole));
     }
 
-    /** PUT /api/admin/roles/{id}  Body: { "roleName": "...", "description": "..." } */
+    /** PUT /api/admin/roles/{id}  Body: { "roleName": "...", "description": "...", "isAdminRole": true } */
     @PutMapping("/{id}")
-    public RoleResponse updateRole(@PathVariable Long id, @RequestBody Map<String, String> body) {
-        return adminUserService.updateRole(id, body.get("roleName"), body.get("description"));
+    public RoleResponse updateRole(@PathVariable Long id, @RequestBody Map<String, Object> body) {
+        String roleName = (String) body.get("roleName");
+        String description = (String) body.get("description");
+        boolean isAdminRole = Boolean.TRUE.equals(body.get("isAdminRole"));
+        return adminUserService.updateRole(id, roleName, description, isAdminRole);
     }
 
     /** DELETE /api/admin/roles/{id} */

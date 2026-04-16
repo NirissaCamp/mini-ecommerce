@@ -19,6 +19,9 @@ public class Role {
     @Column(length = 255)
     private String description;
 
+    @Column(name = "is_admin_role", nullable = false)
+    private boolean isAdminRole = false;
+
     @ManyToMany(mappedBy = "roles")
     private Set<User> users = new HashSet<>();
 
@@ -38,6 +41,9 @@ public class Role {
 
     public String getDescription() { return description; }
     public void setDescription(String description) { this.description = description; }
+
+    public boolean isAdminRole() { return isAdminRole; }
+    public void setAdminRole(boolean isAdminRole) { this.isAdminRole = isAdminRole; }
 
     public Set<User> getUsers() { return users; }
     public void setUsers(Set<User> users) { this.users = users; }

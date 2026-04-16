@@ -98,15 +98,15 @@ export async function adminListRoles(token) {
     return handleResponse(await fetch(ROLES_BASE, { headers: authHeader(token) }));
 }
 
-export async function adminCreateRole(token, roleName, description) {
+export async function adminCreateRole(token, roleName, description, isAdminRole) {
     return handleResponse(await fetch(ROLES_BASE, {
-        method: 'POST', headers: authHeader(token), body: JSON.stringify({ roleName, description }),
+        method: 'POST', headers: authHeader(token), body: JSON.stringify({ roleName, description, isAdminRole }),
     }));
 }
 
-export async function adminUpdateRole(token, id, roleName, description) {
+export async function adminUpdateRole(token, id, roleName, description, isAdminRole) {
     return handleResponse(await fetch(`${ROLES_BASE}/${id}`, {
-        method: 'PUT', headers: authHeader(token), body: JSON.stringify({ roleName, description }),
+        method: 'PUT', headers: authHeader(token), body: JSON.stringify({ roleName, description, isAdminRole }),
     }));
 }
 

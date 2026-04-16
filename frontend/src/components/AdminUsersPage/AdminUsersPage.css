@@ -1,3 +1,7 @@
+/* Error banner */
+.aup-error-banner { display: flex; align-items: center; justify-content: space-between; gap: 10px; background: #fff3f3; border: 1px solid #f5c6c6; border-radius: 8px; padding: 10px 14px; font-size: 13px; color: #b71c1c; margin-bottom: 12px; }
+.aup-error-banner button { background: none; border: none; cursor: pointer; font-size: 15px; color: #b71c1c; padding: 0 2px; line-height: 1; flex-shrink: 0; }
+
 /* Root */
 .aup-root { display: flex; flex-direction: column; height: 100%; gap: 0; }
 
@@ -22,7 +26,7 @@
 .aup-expand-btn:hover { color: #5c6bc0; }
 .aup-expanded-row td { background: #f8f9ff; padding: 10px 14px; border-bottom: 1px solid #eee; }
 .aup-user-chip-list { display: flex; flex-wrap: wrap; gap: 6px; }
-.aup-user-chip { display: inline-flex; align-items: center; gap: 4px; padding: 3px 6px 3px 10px; background: #ede7f6; border-radius: 16px; font-size: 12px; font-weight: 500; color: #4527a0; }
+.aup-user-chip { display: inline-flex; align-items: center; gap: 4px; padding: 3px 6px 3px 10px; background: #f0f2f8; border-radius: 16px; font-size: 12px; font-weight: 500; color: #444; }
 .aup-user-chip-remove { background: none; border: none; cursor: pointer; font-size: 15px; color: #9575cd; padding: 0 2px; line-height: 1; }
 .aup-user-chip-remove:hover { color: #c62828; }
 
@@ -85,6 +89,7 @@
 .aup-row { cursor: pointer; transition: background 0.1s; }
 .aup-row:hover { background: #f5f7ff; }
 .aup-row--active { background: #eef0fb !important; }
+.aup-row--static { cursor: default; }
 .aup-cell--muted { color: #888; font-size: 13px; }
 
 /* Detail panel */
@@ -92,14 +97,19 @@
 .aup-detail-header { padding: 16px 18px; border-bottom: 1px solid #eee; display: flex; justify-content: space-between; align-items: flex-start; }
 .aup-detail-name { font-size: 18px; font-weight: 700; color: #1a1a2e; }
 .aup-detail-meta { font-size: 13px; color: #888; margin: 4px 0; }
-.aup-detail-actions { padding: 10px 18px; display: flex; gap: 8px; border-bottom: 1px solid #eee; }
+.aup-detail-actions { padding: 12px 18px; display: flex; gap: 8px; border-bottom: 1px solid #eee; }
+.aup-detail-actions .aup-btn { flex: 1; text-align: center; padding: 8px 0; font-size: 13px; font-weight: 600; }
 
-/* Tabs */
-.aup-tabs { display: flex; padding: 0 18px; border-bottom: 1px solid #eee; }
-.aup-tab { background: none; border: none; border-bottom: 2px solid transparent; padding: 10px 14px; font-size: 13px; cursor: pointer; color: #666; transition: color 0.15s, border-color
-0.15s; }
-.aup-tab:hover { color: #5c6bc0; }
-.aup-tab--active { color: #5c6bc0; border-bottom-color: #5c6bc0; font-weight: 600; }
+/* Tabs — button style (default) */
+.aup-tabs { display: flex; gap: 6px; padding: 12px 18px; border-bottom: 1px solid #eee; }
+.aup-tab { background: #f5f5f5; border: 1px solid #ddd; border-radius: 8px; padding: 7px 16px; font-size: 13px; cursor: pointer; color: #666; transition: color 0.15s, background 0.15s, border-color 0.15s; }
+.aup-tab:hover { background: #eee; color: #5c6bc0; border-color: #bbb; }
+.aup-tab--active { background: #eef0fb; border-color: #5c6bc0; color: #5c6bc0; font-weight: 600; }
+/* Tabs — header/underline style */
+.aup-tabs--header { gap: 0; padding: 0; border-bottom: 2px solid #eee; }
+.aup-tabs--header .aup-tab { background: none; border: none; border-radius: 0; border-bottom: 2px solid transparent; margin-bottom: -2px; padding: 10px 16px; }
+.aup-tabs--header .aup-tab:hover { background: #f5f7ff; border-color: transparent; color: #5c6bc0; }
+.aup-tabs--header .aup-tab--active { background: none; border-bottom-color: #5c6bc0; color: #5c6bc0; font-weight: 600; }
 .aup-tab-content { flex: 1; overflow: auto; padding: 16px; }
 
 /* Buttons */
@@ -111,6 +121,8 @@
 .aup-btn--primary:hover { background: #4a58a8; }
 .aup-btn--danger { background: #fff; color: #c62828; border-color: #ffcdd2; }
 .aup-btn--danger:hover { background: #ffebee; }
+.aup-btn--danger-filled { background: #c62828; color: #fff; border-color: #c62828; }
+.aup-btn--danger-filled:hover { background: #b71c1c; border-color: #b71c1c; }
 .aup-btn--success { background: #fff; color: #2e7d32; border-color: #c8e6c9; }
 .aup-btn--success:hover { background: #e8f5e9; }
 .aup-close { background: none; border: none; font-size: 16px; color: #aaa; cursor: pointer; padding: 2px 6px; border-radius: 4px; }

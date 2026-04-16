@@ -11,6 +11,16 @@ import {
 } from '../../api/adminUsers';
 import './AdminUsersPage.css';
 
+function ErrorBanner({ message, onClose }) {
+    if (!message) return null;
+    return (
+        <div className="aup-error-banner">
+            <span>⚠ {message}</span>
+            <button onClick={onClose}>✕</button>
+        </div>
+    );
+}
+
 // ── Shared badge components ───────────────────────────────────────────────────
 
 const STATUS_COLORS = {
@@ -22,6 +32,19 @@ const ROLE_COLORS = {
     ROLE_ADMIN: { color: '#4527a0', background: '#ede7f6' },
     ROLE_USER:  { color: '#1565c0', background: '#e3f2fd' },
 };
+const ROLE_PALETTE = [
+    { color: '#1b5e20', background: '#e8f5e9' },
+    { color: '#e65100', background: '#fff3e0' },
+    { color: '#880e4f', background: '#fce4ec' },
+    { color: '#006064', background: '#e0f7fa' },
+    { color: '#bf360c', background: '#fbe9e7' },
+    { color: '#33691e', background: '#f1f8e9' },
+];
+function roleColor(name) {
+    if (ROLE_COLORS[name]) return ROLE_COLORS[name];
+    const idx = name.split('').reduce((acc, c) => acc + c.charCodeAt(0), 0) % ROLE_PALETTE.length;
+    return ROLE_PALETTE[idx];
+}
 const ACTION_STYLES = {
     CREATE:      { color: '#2e7d32', background: '#e8f5e9' },
     UPDATE:      { color: '#4527a0', background: '#ede7f6' },
@@ -35,7 +58,7 @@ function StatusBadge({ status }) {
     return <span style={{ ...s, padding: '2px 10px', borderRadius: 12, fontSize: 12, fontWeight: 600 }}>{status}</span>;
 }
 function RoleBadge({ role }) {
-    const s = ROLE_COLORS[role] || { color: '#333', background: '#eee' };
+    const s = roleColor(role);
     return <span style={{ ...s, padding: '2px 8px', borderRadius: 10, fontSize: 11, fontWeight: 600, marginRight: 4 }}>{role}</span>;
 }
 function ActionBadge({ action }) {
@@ -153,9 +176,11 @@ function UserDetailSection({ token }) {
     const [detailTab, setDetailTab]     = useState('info');
     const [addresses, setAddresses]     = useState([]);
     const [addrLoaded, setAddrLoaded]   = useState(false);
-    const [opLogs, setOpLogs]           = useState([]);
-    const [opLoaded, setOpLoaded]       = useState(false);
+    const [loginLogs, setLoginLogs]     = useState([]);
+    const [loginLoaded, setLoginLoaded] = useState(false);
     const [subLoading, setSubLoading]   = useState(false);
+
+    const [actionError, setActionError] = useState('');
 
     const [allRoles, setAllRoles]   = useState([]);
     const [userModal, setUserModal] = useState(false);
@@ -185,8 +210,8 @@ function UserDetailSection({ token }) {
 
     function selectUser(user) {
         setSelected(user); setDetailTab('info');
-        setAddresses([]); setAddrLoaded(false);
-        setOpLogs([]);    setOpLoaded(false);
+        setAddresses([]);  setAddrLoaded(false);
+        setLoginLogs([]); setLoginLoaded(false);
     }
 
     async function loadTab(tab) {
@@ -197,9 +222,9 @@ function UserDetailSection({ token }) {
             try { setAddresses(await adminGetAddresses(token, selected.id)); setAddrLoaded(true); }
             catch { } finally { setSubLoading(false); }
         }
-        if (tab === 'operationLog' && !opLoaded) {
+        if (tab === 'loginLog' && !loginLoaded) {
             setSubLoading(true);
-            try { setOpLogs(await adminGetOperationLogs(token, selected.id)); setOpLoaded(true); }
+            try { setLoginLogs(await adminGetLoginLogs(token, selected.id)); setLoginLoaded(true); }
             catch { } finally { setSubLoading(false); }
         }
     }
@@ -252,7 +277,7 @@ function UserDetailSection({ token }) {
             await adminDeleteUser(token, user.id);
             setUsers(prev => prev.filter(u => u.id !== user.id));
             if (selected?.id === user.id) setSelected(null);
-        } catch (e) { alert(e.message); }
+        } catch (e) { setActionError('Failed to delete user. Please try again.'); }
     }
     function patchUser(updated) {
         setUsers(prev => prev.map(u => u.id === updated.id ? updated : u));
@@ -261,6 +286,7 @@ function UserDetailSection({ token }) {
 
     return (
         <>
+            <ErrorBanner message={actionError} onClose={() => setActionError('')} />
             {/* Toolbar */}
             <div className="aup-toolbar">
                 <h1 className="aup-title">Users</h1>
@@ -288,7 +314,7 @@ function UserDetailSection({ token }) {
                             <table className="aup-table">
                                 <thead><tr>
                                     <th>ID</th><th>Username</th><th>Email</th>
-                                    <th>Roles</th><th>Status</th><th>Joined</th><th></th>
+                                    <th>Roles</th><th>Status</th><th>Joined</th>
                                 </tr></thead>
                                 <tbody>
                                 {users.map(u => (
@@ -302,11 +328,6 @@ function UserDetailSection({ token }) {
                                         <td><StatusBadge status={u.status} /></td>
                                         <td className="aup-cell--muted">
                                             {u.createdAt ? new Date(u.createdAt).toLocaleDateString() : '—'}
-                                        </td>
-                                        <td onClick={e => e.stopPropagation()}>
-                                            <button className="aup-btn aup-btn--sm" onClick={() => openEdit(u)}>Edit</button>
-                                            {' '}
-                                            <button className="aup-btn aup-btn--sm aup-btn--danger" onClick={() => deleteUser(u)}>Delete</button>
                                         </td>
                                     </tr>
                                 ))}
@@ -331,14 +352,12 @@ function UserDetailSection({ token }) {
                         </div>
 
                         <div className="aup-detail-actions">
-                            <button className="aup-btn aup-btn--sm" onClick={() => openEdit(selected)}>Edit</button>
-                            {selected.blacklisted &&
-                                <button className="aup-btn aup-btn--sm aup-btn--success" onClick={unblacklist} disabled={saving}>Unblacklist</button>}
-                            <button className="aup-btn aup-btn--sm aup-btn--danger" onClick={() => deleteUser(selected)}>Delete</button>
+                            <button className="aup-btn aup-btn--primary" onClick={() => openEdit(selected)}>Edit</button>
+                            <button className="aup-btn aup-btn--danger-filled" onClick={() => deleteUser(selected)}>Delete</button>
                         </div>
 
-                        <div className="aup-tabs">
-                            {[['info', 'Info'], ['addresses', 'Addresses'], ['operationLog', 'Operation Log']].map(([t, label]) => (
+                        <div className="aup-tabs aup-tabs--header">
+                            {[['info', 'Info'], ['addresses', 'Addresses'], ['loginLog', 'Login Log']].map(([t, label]) => (
                                 <button key={t} className={`aup-tab ${detailTab === t ? 'aup-tab--active' : ''}`}
                                     onClick={() => loadTab(t)}>{label}</button>
                             ))}
@@ -348,7 +367,7 @@ function UserDetailSection({ token }) {
                             {subLoading ? <div className="aup-placeholder">Loading…</div>
                                 : detailTab === 'info'         ? <InfoTab user={selected} />
                                 : detailTab === 'addresses'    ? <AddressesTab addresses={addresses} />
-                                :                               <UserOperationLogTab logs={opLogs} />}
+                                :                               <LoginLogsTable logs={loginLogs} showUser={false} />}
                         </div>
                     </div>
                 )}
@@ -423,10 +442,11 @@ function RolesPermissionsSection({ token }) {
     const [roleModal, setRoleModal]       = useState(false);
     const [editingRole, setEditingRole]   = useState(null);
     const [addUserModal, setAddUserModal] = useState(false);
-    const [roleForm, setRoleForm]         = useState({ name: '', desc: '' });
+    const [roleForm, setRoleForm]         = useState({ name: '', desc: '', isAdminRole: false });
     const [addUserId, setAddUserId]       = useState('');
     const [modalError, setModalError]     = useState('');
     const [saving, setSaving]             = useState(false);
+    const [actionError, setActionError]   = useState('');
     const [togglingPerm, setTogglingPerm] = useState(null);
 
     async function loadRoles() {
@@ -441,10 +461,10 @@ function RolesPermissionsSection({ token }) {
     useEffect(() => { loadRoles(); }, []);
 
     function openCreate() {
-        setEditingRole(null); setRoleForm({ name: '', desc: '' }); setModalError(''); setRoleModal(true);
+        setEditingRole(null); setRoleForm({ name: '', desc: '', isAdminRole: false }); setModalError(''); setRoleModal(true);
     }
     function openEdit(role) {
-        setEditingRole(role); setRoleForm({ name: role.roleName, desc: role.description || '' });
+        setEditingRole(role); setRoleForm({ name: role.roleName, desc: role.description || '', isAdminRole: role.isAdminRole || false });
         setModalError(''); setRoleModal(true);
     }
 
@@ -453,13 +473,13 @@ function RolesPermissionsSection({ token }) {
         setSaving(true); setModalError('');
         try {
             if (editingRole) {
-                const updated = await adminUpdateRole(token, editingRole.id, roleForm.name.trim(), roleForm.desc.trim());
+                const updated = await adminUpdateRole(token, editingRole.id, roleForm.name.trim(), roleForm.desc.trim(), roleForm.isAdminRole);
                 setRoles(prev => prev.map(r => r.id === updated.id ? updated : r));
                 if (selectedRole?.id === updated.id) setSelectedRole(updated);
             } else {
                 const name = roleForm.name.trim().toUpperCase().startsWith('ROLE_')
                     ? roleForm.name.trim() : `ROLE_${roleForm.name.trim().toUpperCase()}`;
-                const created = await adminCreateRole(token, name, roleForm.desc.trim());
+                const created = await adminCreateRole(token, name, roleForm.desc.trim(), roleForm.isAdminRole);
                 setRoles(prev => [...prev, created]);
             }
             setRoleModal(false);
@@ -474,7 +494,7 @@ function RolesPermissionsSection({ token }) {
             setRoles(prev => prev.filter(r => r.id !== role.id));
             if (selectedRole?.id === role.id) setSelectedRole(null);
             if (expandedRole === role.id) setExpandedRole(null);
-        } catch (e) { alert(e.message); }
+        } catch (e) { setActionError(e.message); }
     }
 
     async function removeUserFromRole(roleId, userId) {
@@ -482,7 +502,7 @@ function RolesPermissionsSection({ token }) {
             const updated = await adminRemoveUserFromRole(token, roleId, userId);
             setRoles(prev => prev.map(r => r.id === updated.id ? updated : r));
             if (selectedRole?.id === updated.id) setSelectedRole(updated);
-        } catch (e) { alert(e.message); }
+        } catch (e) { setActionError('Failed to remove user from role. Please try again.'); }
     }
 
     async function submitAddUser() {
@@ -507,7 +527,7 @@ function RolesPermissionsSection({ token }) {
                 : await adminAddPermissionToRole(token, selectedRole.id, permissionCode);
             setSelectedRole(updated);
             setRoles(prev => prev.map(r => r.id === updated.id ? updated : r));
-        } catch (e) { alert(e.message); }
+        } catch (e) { setActionError('Failed to update permission. Please try again.'); }
         finally { setTogglingPerm(null); }
     }
 
@@ -515,6 +535,7 @@ function RolesPermissionsSection({ token }) {
 
     return (
         <div className="aup-rp-root">
+            <ErrorBanner message={actionError} onClose={() => setActionError('')} />
             {/* Left — Roles table */}
             <div className="aup-rp-left">
                 <div className="aup-rp-panel-header">
@@ -635,6 +656,11 @@ function RolesPermissionsSection({ token }) {
                         <label>Description</label>
                         <input className="aup-input" placeholder="Optional description"
                             value={roleForm.desc} onChange={e => setRoleForm(f => ({ ...f, desc: e.target.value }))} />
+                        <label className="aup-checkbox-label">
+                            <input type="checkbox" checked={roleForm.isAdminRole}
+                                onChange={e => setRoleForm(f => ({ ...f, isAdminRole: e.target.checked }))} />
+                            Admin Panel Access
+                        </label>
                     </div>
                     {modalError && <div className="aup-error">{modalError}</div>}
                     <div className="aup-modal-footer">
@@ -745,7 +771,6 @@ function OperationLogSection({ token }) {
 
     return (
         <div className="aup-section">
-            <h2 className="aup-section-title">Operation Log</h2>
             <div className="aup-tabs" style={{ marginBottom: 0 }}>
                 <button className={`aup-tab ${subTab === 'admin' ? 'aup-tab--active' : ''}`} onClick={() => switchTab('admin')}>Admin Operations</button>
                 <button className={`aup-tab ${subTab === 'login' ? 'aup-tab--active' : ''}`} onClick={() => switchTab('login')}>User Behavior</button>
@@ -839,11 +864,12 @@ function OperationLogSection({ token }) {
 // ══════════════════════════════════════════════════════════════════════════════
 
 function BlacklistSection({ token }) {
-    const [entries, setEntries] = useState([]);
-    const [loading, setLoading] = useState(false);
-    const [error, setError]     = useState('');
-    const [saving, setSaving]   = useState(null);
-    const [keyword, setKeyword] = useState('');
+    const [entries, setEntries]         = useState([]);
+    const [loading, setLoading]         = useState(false);
+    const [error, setError]             = useState('');
+    const [saving, setSaving]           = useState(null);
+    const [keyword, setKeyword]         = useState('');
+    const [actionError, setActionError] = useState('');
 
     useEffect(() => {
         setLoading(true);
@@ -859,7 +885,7 @@ function BlacklistSection({ token }) {
         try {
             await adminUnblacklistUser(token, entry.userId);
             setEntries(prev => prev.filter(e => e.userId !== entry.userId));
-        } catch (e) { alert(e.message); }
+        } catch (e) { setActionError('Failed to remove user from blacklist. Please try again.'); }
         finally { setSaving(null); }
     }
 
@@ -876,6 +902,7 @@ function BlacklistSection({ token }) {
 
     return (
         <div className="aup-section">
+            <ErrorBanner message={actionError} onClose={() => setActionError('')} />
             {/* Stats */}
             <div className="aup-bl-stats">
                 <div className="aup-bl-stat">
@@ -909,7 +936,7 @@ function BlacklistSection({ token }) {
                             </tr></thead>
                             <tbody>
                             {filtered.map(e => (
-                                <tr key={e.id} className="aup-row">
+                                <tr key={e.id} className="aup-row aup-row--static">
                                     <td className="aup-cell--muted">{e.userId}</td>
                                     <td><strong>{e.username}</strong></td>
                                     <td><StatusBadge status={e.status} /></td>
@@ -981,7 +1008,7 @@ function AdminOpsTable({ logs }) {
             </tr></thead>
             <tbody>
             {logs.map(l => (
-                <tr key={l.id} className="aup-row">
+                <tr key={l.id} className="aup-row aup-row--static">
                     <td className="aup-cell--muted">{l.createdAt ? new Date(l.createdAt).toLocaleString() : '—'}</td>
                     <td>{l.operatorUsername}</td>
                     <td className="aup-cell--muted">{l.targetUsername || '—'}</td>
@@ -1003,7 +1030,7 @@ function LoginLogsTable({ logs, showUser }) {
             </tr></thead>
             <tbody>
             {logs.map(l => (
-                <tr key={l.id} className="aup-row">
+                <tr key={l.id} className="aup-row aup-row--static">
                     <td className="aup-cell--muted">{l.loginTime ? new Date(l.loginTime).toLocaleString() : '—'}</td>
                     {showUser && <td>{l.username || '—'}</td>}
                     <td className="aup-cell--muted">{l.loginIp || '—'}</td>

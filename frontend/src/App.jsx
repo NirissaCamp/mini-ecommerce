@@ -49,11 +49,8 @@ function App() {
     const t = localStorage.getItem('token')
     if (t) {
         getMe(t)
-            .then((data) => {
-                const auth = String(data?.authorities ?? '')
-                setIsAdmin(auth.includes('ROLE_ADMIN'))
-            })
-            .catch(() => setIsAdmin((false)))
+            .then((data) => { setIsAdmin(data?.isAdmin === true) })
+            .catch(() => setIsAdmin(false))
     } else {
         setIsAdmin(false)
     }
@@ -114,8 +111,7 @@ function App() {
             .then((data) => {
                 if (data && data.username != null) {
                     setUserName(data.username)
-                    const auth = String(data.authorities ?? '')
-                    setIsAdmin(auth.includes('ROLE_ADMIN'))
+                    setIsAdmin(data.isAdmin === true)
                     loadCartCount()
                 } else {
                     setUserName(null)
