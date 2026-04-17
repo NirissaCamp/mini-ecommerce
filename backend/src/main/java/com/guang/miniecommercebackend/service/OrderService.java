@@ -31,13 +31,15 @@ public class OrderService {
     private final CartRepository cartRepository;
     private final ProductRepository productRepository;
     private final CartService cartService;
+    private final InventoryService inventoryService;
 
-    public OrderService(OrderRepository orderRepository, UserRepository userRepository, CartRepository cartRepository, ProductRepository productRepository, CartService cartService){
+    public OrderService(OrderRepository orderRepository, UserRepository userRepository, CartRepository cartRepository, ProductRepository productRepository, CartService cartService, InventoryService inventoryService){
         this.orderRepository = orderRepository;
         this.userRepository = userRepository;
         this.cartRepository = cartRepository;
         this.productRepository = productRepository;
         this.cartService = cartService;
+        this.inventoryService = inventoryService;
     }
 
     /**
@@ -73,13 +75,6 @@ public class OrderService {
                     .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "product not found"));
             lockedById.put(productId, p);
         }
-        //  3) 用 Map里的Product 做库存校验
-        for (CartItem item : cart.getItems()){
-            Long pid = item.getProduct().getId();
-            Product p = lockedById.get(pid);
-            validateStock(p, item.getQuantity());
-        }
-
         //组装 Order / OrderItem
         Order order = new Order();
         order.setUserId(user.getId());
@@ -107,12 +102,13 @@ public class OrderService {
 
         Order saved = orderRepository.save(order);
 
-        // 下单成功后扣减库存（与校验在同一事务里，避免只下单不扣库存）
-        for (CartItem cartItem : cart.getItems()){
-            Long pid = cartItem.getProduct().getId();
-            Product product = lockedById.get(pid);
-            product.setStock(product.getStock() - cartItem.getQuantity());
-            productRepository.save(product);
+        // Allocate inventory in sorted product-ID order (prevents deadlocks)
+        for (Long productId : productIds) {
+            int qty = cart.getItems().stream()
+                    .filter(ci -> ci.getProduct().getId().equals(productId))
+                    .mapToInt(CartItem::getQuantity)
+                    .sum();
+            inventoryService.allocate(productId, qty, saved.getId());
         }
         // 先扣库存再清空购物车
         cartService.clearCart(username);
@@ -134,14 +130,6 @@ public class OrderService {
         User user = getUserByUsernameOr404(username);
         return orderRepository.findByUserIdOrderByCreatedAtDesc(user.getId())
                 .stream().map(this::toSummary).toList();
-    }
-
-    private void validateStock(Product product, int requestedQty) {
-        if (product.getStock() < requestedQty) {
-            throw new ResponseStatusException(
-                    HttpStatus.CONFLICT,
-                    "insufficient stock for product: " + product.getName());
-        }
     }
 
     private User getUserByUsernameOr404(String username) {
