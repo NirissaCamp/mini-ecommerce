@@ -1,14 +1,14 @@
 package com.guang.miniecommercebackend.controller;
 
-//import org.springframework.web.bind.annotation.*;
 import org.springframework.security.core.Authentication;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 import com.guang.miniecommercebackend.service.OrderService;
-import com.guang.miniecommercebackend.dto.OrderSummaryResponse;
+import com.guang.miniecommercebackend.dto.CreateReturnRequest;
 import com.guang.miniecommercebackend.dto.OrderDetailResponse;
+import com.guang.miniecommercebackend.dto.OrderSummaryResponse;
+import com.guang.miniecommercebackend.dto.ReturnRequestResponse;
+import jakarta.validation.Valid;
+import org.springframework.http.HttpStatus;
 
 import java.util.List;
 
@@ -35,6 +35,14 @@ public class OrderController {
         return orderService.getMyOrder(username, orderId);
     }
 
-
-
+    // Create return request — POST /api/orders/{orderId}/returns
+    @PostMapping("/{orderId}/returns")
+    @ResponseStatus(HttpStatus.CREATED)
+    public ReturnRequestResponse createReturn(
+            Authentication auth,
+            @PathVariable Long orderId,
+            @Valid @RequestBody CreateReturnRequest req) {
+        String username = (String) auth.getPrincipal();
+        return orderService.createReturn(username, orderId, req);
+    }
 }
