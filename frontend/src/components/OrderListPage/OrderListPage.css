@@ -213,11 +213,11 @@
 }
 
 .orders-card__badge {
-    font-size: 0.72rem;
+    font-size: 0.7rem;
     font-weight: 700;
     text-transform: uppercase;
-    letter-spacing: 0.03em;
-    padding: 0.3rem 0.65rem;
+    letter-spacing: 0.04em;
+    padding: 0.25rem 0.65rem;
     border-radius: 999px;
     white-space: nowrap;
 }
@@ -229,15 +229,39 @@
 }
 
 .orders-card__badge--paid {
+    background: #dbeafe;
+    color: #1d4ed8;
+    border: 1px solid #bfdbfe;
+}
+
+.orders-card__badge--processing {
+    background: #fff7ed;
+    color: #c2410c;
+    border: 1px solid #fed7aa;
+}
+
+.orders-card__badge--shipped {
+    background: #ede9fe;
+    color: #5b21b6;
+    border: 1px solid #c4b5fd;
+}
+
+.orders-card__badge--delivered {
     background: #d1fae5;
     color: #065f46;
     border: 1px solid #6ee7b7;
 }
 
-.orders-card__badge--cancelled {
+.orders-card__badge--closed {
     background: #f3f4f6;
-    color: #6b7280;
-    border: 1px solid #e5e7eb;
+    color: #374151;
+    border: 1px solid #d1d5db;
+}
+
+.orders-card__badge--cancelled {
+    background: #fee2e2;
+    color: #b91c1c;
+    border: 1px solid #fecaca;
 }
 
 .orders-card__mid {
