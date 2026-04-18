@@ -24,3 +24,11 @@ export function getOrder(token, orderId){
 export function checkout(token){
     return fetch(CHECKOUT_URL, {method: 'POST', headers: authHeaders(token) }).then(handleResponse)
 }
+
+export function createReturn(token, orderId, body) {
+    return fetch(`${ORDERS_BASE}/${orderId}/returns`, {
+        method: 'POST',
+        headers: authHeaders(token),
+        body: JSON.stringify(body),
+    }).then(handleResponse)
+}
