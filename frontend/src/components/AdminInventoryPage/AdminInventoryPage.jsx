@@ -286,11 +286,12 @@ function MovementsTable({ token, productId }) {
 
 // ── Detail Panel (right panel) ─────────────────────────────────────────────
 
-function DetailPanel({ token, productId, inventory }) {
+function DetailPanel({ token, productId, inventory, onStockChanged }) {
     const [refreshKey, setRefreshKey] = useState(0)
 
     function handleSuccess() {
         setRefreshKey(k => k + 1)
+        onStockChanged()
     }
 
     if (!productId) {
@@ -356,6 +357,7 @@ export default function AdminInventoryPage() {
     const token = useMemo(() => localStorage.getItem('token'), [])
     const [selectedId, setSelectedId] = useState(null)
     const [allItems, setAllItems] = useState([])
+    const [listRefreshKey, setListRefreshKey] = useState(0)
 
     const selectedInventory = useMemo(
         () => allItems.find(i => i.productId === selectedId) ?? null,
@@ -371,18 +373,20 @@ export default function AdminInventoryPage() {
                     selectedId={selectedId}
                     onSelect={setSelectedId}
                     onItemsLoaded={setAllItems}
+                    listRefreshKey={listRefreshKey}
                 />
                 <DetailPanel
                     token={token}
                     productId={selectedId}
                     inventory={selectedInventory}
+                    onStockChanged={() => setListRefreshKey(k => k + 1)}
                 />
             </div>
         </div>
     )
 }
 
-function InventoryList({ token, selectedId, onSelect, onItemsLoaded }) {
+function InventoryList({ token, selectedId, onSelect, onItemsLoaded, listRefreshKey }) {
     const [items, setItems] = useState([])
     const [loading, setLoading] = useState(false)
     const [error, setError] = useState(null)
@@ -413,7 +417,7 @@ function InventoryList({ token, selectedId, onSelect, onItemsLoaded }) {
     useEffect(() => {
         load(keyword, lowStock)
         // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [])
+    }, [listRefreshKey])
 
     function handleSearch(e) {
         e.preventDefault()
