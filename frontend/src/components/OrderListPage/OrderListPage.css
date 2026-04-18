@@ -1,5 +1,5 @@
 /*订单列表 OrderListPage*/
-/*引入 OrderListPage.css：标题、副标题、卡片式订单行、状态徽章（PENDING / PAID / CANCELLED）、金额与日期格式化（Intl + toLocaleString）。*/
+/*引入 OrderListPage.css：标题、副标题、卡片式订单行、状态徽章（PENDING / PAID / PROCESSING / SHIPPED / DELIVERED / CLOSED / CANCELLED）、金额与日期格式化（Intl + toLocaleString）。*/
 /*                                                                          未登录：居中提示 + 黄色主按钮 + 继续购物链接。*/
 /*                                                                          加载中：三张卡片骨架 + shimmer。*/
 /*                                                                          错误：左侧红条提示条。*/
