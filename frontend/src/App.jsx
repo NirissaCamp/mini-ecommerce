@@ -13,6 +13,7 @@ import RequireAdmin from './components/RequireAdmin/RequireAdmin.jsx'
 import ProductDetail from "./components/ProductDetail/ProductDetail.jsx";
 import AdminLayout from "./components/AdminLayout/AdminLayout.jsx";
 import AdminDashboard from "./components/AdminDashboard/AdminDashboard.jsx";
+import AdminInventoryPage from "./components/AdminInventoryPage/AdminInventoryPage.jsx";
 import AdminOrdersPage from "./components/AdminOrdersPage/AdminOrdersPage.jsx";
 import AdminUsersPage from "./components/AdminUsersPage/AdminUsersPage.jsx";
 import OrderListPage from "./components/OrderListPage/OrderListPage.jsx";
@@ -213,6 +214,7 @@ function App() {
                             <Routes>
                                 <Route path="dashboard" element={<AdminDashboard />} />
                                 <Route path="products" element={<AdminProductsPage />} />
+                                <Route path="inventory" element={<AdminInventoryPage />} />
                                 <Route path="orders" element={<AdminOrdersPage />} />
                                 <Route path="users" element={<AdminUsersPage userPermissions={userPermissions} isSuperAdmin={isSuperAdmin} />} />
                             </Routes>

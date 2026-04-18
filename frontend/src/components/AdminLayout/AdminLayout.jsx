@@ -4,8 +4,9 @@ import './AdminLayout.css'
 
 const NAV_ITEMS = [
     { label: 'Dashboard', path: '/admin/dashboard', icon: '🗂️' },
-    { label: 'Products',  path: '/admin/products',  icon: '🛍️', needs: p => p.some(c => c.startsWith('PRODUCT_')) },
-    { label: 'Orders',    path: '/admin/orders',    icon: '🧾', needs: p => p.some(c => c.startsWith('ORDER_')) },
+    { label: 'Products',   path: '/admin/products',   icon: '🛍️', needs: p => p.some(c => c.startsWith('PRODUCT_')) },
+    { label: 'Inventory',  path: '/admin/inventory',  icon: '📦', needs: p => p.some(c => c.startsWith('INVENTORY_')) },
+    { label: 'Orders',     path: '/admin/orders',     icon: '🧾', needs: p => p.some(c => c.startsWith('ORDER_')) },
     { label: 'Users',     path: '/admin/users',     icon: '👥', needs: p => p.some(c => c.startsWith('USER_')) },
 ]
 

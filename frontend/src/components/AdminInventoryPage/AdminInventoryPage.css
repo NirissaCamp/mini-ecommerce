@@ -1,0 +1,339 @@
+/* ── Page shell ── */
+.aip-page {
+    padding: 0;
+}
+
+.aip-title {
+    font-size: 22px;
+    font-weight: 700;
+    color: #1a1a2e;
+    margin: 0 0 16px;
+}
+
+/* ── Split layout ── */
+.aip-layout {
+    display: flex;
+    align-items: flex-start;
+    gap: 16px;
+}
+
+.aip-list-panel {
+    flex: 0 0 520px;
+    min-width: 320px;
+    overflow-x: auto;
+}
+
+.aip-detail-panel {
+    flex: 1 1 0;
+    min-width: 0;
+    overflow-x: auto;
+}
+
+.aip-detail-panel--empty {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 200px;
+}
+
+/* ── Card ── */
+.aip-card {
+    background: #fff;
+    border-radius: 12px;
+    padding: 20px;
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
+    box-sizing: border-box;
+}
+
+.aip-card__title {
+    font-size: 16px;
+    font-weight: 700;
+    color: #1a1a2e;
+    margin: 0 0 16px;
+}
+
+/* ── Filter bar ── */
+.aip-filter-bar {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 14px;
+}
+
+/* ── Inputs ── */
+.aip-input {
+    border: 1px solid #ddd;
+    border-radius: 6px;
+    padding: 8px 10px;
+    font: inherit;
+    font-size: 13px;
+    outline: none;
+    transition: border 0.15s;
+    flex: 1 1 0;
+    min-width: 0;
+}
+
+.aip-input:focus {
+    border-color: #5c6bc0;
+}
+
+.aip-input--narrow {
+    flex: 0 0 120px;
+}
+
+/* ── Labels ── */
+.aip-label {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+    font-size: 13px;
+    font-weight: 600;
+    color: #333;
+    flex: 1 1 0;
+    min-width: 0;
+}
+
+/* ── Buttons ── */
+.aip-btn {
+    padding: 8px 16px;
+    border-radius: 6px;
+    border: 1.5px solid #5c6bc0;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.15s;
+    background: transparent;
+    color: #5c6bc0;
+    white-space: nowrap;
+}
+
+.aip-btn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+.aip-btn:hover:not(:disabled) {
+    background: #5c6bc0;
+    color: #fff;
+}
+
+.aip-btn--primary {
+    background: #5c6bc0;
+    color: #fff;
+    border-color: #5c6bc0;
+}
+
+.aip-btn--primary:hover:not(:disabled) {
+    background: #4a59af;
+    border-color: #4a59af;
+    color: #fff;
+}
+
+.aip-btn--sm {
+    padding: 5px 12px;
+    font-size: 12px;
+}
+
+/* ── Error banner ── */
+.aip-error {
+    margin-bottom: 12px;
+    padding: 10px 12px;
+    background: #ffe8e8;
+    border: 1px solid #f2bcbc;
+    color: #9a1e1e;
+    border-radius: 6px;
+    font-size: 13px;
+}
+
+/* ── State messages (loading / empty) ── */
+.aip-state {
+    padding: 20px 0;
+    color: #888;
+    font-size: 14px;
+    text-align: center;
+}
+
+/* ── Table ── */
+.aip-table-wrap {
+    overflow-x: auto;
+}
+
+.aip-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13px;
+}
+
+.aip-table th {
+    text-align: left;
+    padding: 8px 10px;
+    color: #555;
+    font-weight: 600;
+    border-bottom: 2px solid #f0f0f0;
+    white-space: nowrap;
+}
+
+.aip-table td {
+    padding: 10px;
+    border-bottom: 1px solid #f5f5f5;
+    vertical-align: middle;
+}
+
+.aip-num {
+    text-align: right;
+}
+
+.aip-nowrap {
+    white-space: nowrap;
+}
+
+.aip-ref {
+    font-size: 12px;
+    color: #666;
+    white-space: nowrap;
+}
+
+/* ── Clickable row ── */
+.aip-row {
+    cursor: pointer;
+    transition: background 0.1s;
+}
+
+.aip-row:hover {
+    background: #f5f7ff;
+}
+
+.aip-row--selected {
+    background: #eef0fb;
+}
+
+.aip-row--selected:hover {
+    background: #e4e8f8;
+}
+
+/* ── Qty change colours ── */
+.aip-positive {
+    color: #2e7d32;
+    font-weight: 600;
+}
+
+.aip-negative {
+    color: #c62828;
+    font-weight: 600;
+}
+
+/* ── Movement type badge ── */
+.aip-badge {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.03em;
+    text-transform: uppercase;
+    background: #e8eaf6;
+    color: #3949ab;
+}
+
+.aip-badge--receive   { background: #e8f5e9; color: #2e7d32; }
+.aip-badge--fulfill   { background: #fff3e0; color: #e65100; }
+.aip-badge--allocate  { background: #e3f2fd; color: #1565c0; }
+.aip-badge--deallocate{ background: #f3e5f5; color: #6a1b9a; }
+.aip-badge--return    { background: #e0f7fa; color: #00695c; }
+.aip-badge--adjust    { background: #fce4ec; color: #880e4f; }
+
+/* ── Summary strip ── */
+.aip-summary {
+    margin-bottom: 20px;
+}
+
+.aip-summary-grid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+}
+
+.aip-summary-item {
+    background: #f5f7fa;
+    border-radius: 8px;
+    padding: 10px 16px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    min-width: 80px;
+    flex: 1 1 80px;
+}
+
+.aip-summary-item__label {
+    font-size: 11px;
+    color: #888;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    margin-bottom: 4px;
+}
+
+.aip-summary-item__value {
+    font-size: 18px;
+    font-weight: 700;
+    color: #1a1a2e;
+}
+
+/* ── Forms row (Receive + Adjust side by side) ── */
+.aip-forms-row {
+    display: flex;
+    gap: 16px;
+    margin-bottom: 24px;
+    flex-wrap: wrap;
+}
+
+/* ── Sub-form ── */
+.aip-subform {
+    flex: 1 1 220px;
+    background: #f5f7fa;
+    border-radius: 10px;
+    padding: 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    min-width: 0;
+}
+
+.aip-subform__title {
+    font-size: 14px;
+    font-weight: 700;
+    color: #1a1a2e;
+    margin: 0 0 4px;
+}
+
+.aip-form-row {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+.aip-form-actions {
+    display: flex;
+    justify-content: flex-end;
+    margin-top: 4px;
+}
+
+/* ── Movements section ── */
+.aip-movements {
+    border-top: 1px solid #f0f2f8;
+    padding-top: 16px;
+}
+
+/* ── Pagination ── */
+.aip-pagination {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    justify-content: center;
+    margin-top: 12px;
+}
+
+.aip-pagination__info {
+    font-size: 13px;
+    color: #555;
+}
