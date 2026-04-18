@@ -229,6 +229,7 @@ public class OrderService {
     //一个 OrderItem → 一个 OrderItemResponse
     private OrderItemResponse toOrderItemResponse (OrderItem item){
         return new OrderItemResponse(
+                item.getId(),
                 item.getProductId(),
                 item.getProductName(),
                 item.getUnitPrice(),
