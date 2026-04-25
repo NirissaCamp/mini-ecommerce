@@ -352,7 +352,7 @@ function OrderDetailPanel({ token, orderId, onOrderUpdated }) {
                             onClick={handleStatusUpdate}
                             disabled={updating || !nextStatus}
                         >
-                            {updating ? 'Updating…' : 'Update Status'}
+                            {updating ? 'Updating…' : `Move to ${nextStatus}`}
                         </button>
                     </div>
                 </div>

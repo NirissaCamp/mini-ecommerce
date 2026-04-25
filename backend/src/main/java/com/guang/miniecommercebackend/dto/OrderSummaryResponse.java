@@ -9,14 +9,16 @@ public class OrderSummaryResponse {
     private BigDecimal totalAmount;
     private String status;          // 若实体用枚举，可在这里转成 String
     private LocalDateTime createdAt;
+    private String returnStatus;
 
     public OrderSummaryResponse() {}
 
-    public OrderSummaryResponse(Long id, BigDecimal totalAmount, String status, LocalDateTime createdAt) {
+    public OrderSummaryResponse(Long id, BigDecimal totalAmount, String status, LocalDateTime createdAt, String returnStatus) {
         this.id = id;
         this.totalAmount = totalAmount;
         this.status = status;
         this.createdAt = createdAt;
+        this.returnStatus = returnStatus;
     }
 
     public Long getId() { return id; }
@@ -30,4 +32,7 @@ public class OrderSummaryResponse {
 
     public LocalDateTime getCreatedAt() { return createdAt; }
     public void setCreatedAt(LocalDateTime createdAt) { this.createdAt = createdAt; }
+
+    public String getReturnStatus() { return returnStatus; }
+    public void setReturnStatus(String returnStatus) { this.returnStatus = returnStatus; }
 }

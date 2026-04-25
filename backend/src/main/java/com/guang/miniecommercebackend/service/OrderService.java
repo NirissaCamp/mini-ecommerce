@@ -128,6 +128,11 @@ public class OrderService {
                     .filter(ci -> ci.getProduct().getId().equals(productId))
                     .mapToInt(CartItem::getQuantity)
                     .sum();
+            //  checkout 时 allocate
+            //
+            //  用户下单（还没发货）时，把库存从 available 挪到 allocated
+            //  目的是“锁货”，防止超卖
+            //  不是实际出库
             inventoryService.allocate(productId, qty, saved.getId());
         }
         // 先扣库存再清空购物车
@@ -210,10 +215,16 @@ public class OrderService {
 
     //订单列表
     @Transactional(readOnly = true)
-    public List<OrderSummaryResponse> listMyOrders(String username){
+    public List<OrderSummaryResponse> listMyOrders(String username, OrderStatus status){
         User user = getUserByUsernameOr404(username);
-        return orderRepository.findByUserIdOrderByCreatedAtDesc(user.getId())
-                .stream().map(this::toSummary).toList();
+        List<Order> orders;
+        if (status == null) {
+            orders = orderRepository.findByUserIdOrderByCreatedAtDesc(user.getId());
+        } else {
+            orders = orderRepository.findByUserIdAndStatusOrderByCreatedAtDesc(user.getId(), status);
+        }
+
+        return orders.stream().map(this::toSummary).toList();
     }
 
     private ReturnRequestResponse toReturnResponse(ReturnRequest rr,
@@ -262,12 +273,27 @@ public class OrderService {
     }
 
     //写 toSummary
+
+
     private OrderSummaryResponse toSummary(Order o){
+        List<ReturnRequest> returns = returnRequestRepository.findByOrderId(o.getId());
+
+        String returnStatus = null;
+        if (returns.stream().anyMatch(r -> r.getStatus() == ReturnStatus.REQUESTED)) {
+            returnStatus = "REQUESTED";
+        } else if (returns.stream().anyMatch(r -> r.getStatus() == ReturnStatus.APPROVED)) {
+            returnStatus = "APPROVED";
+        } else if (returns.stream().anyMatch(r -> r.getStatus() == ReturnStatus.REFUNDED)) {
+            returnStatus = "REFUNDED";
+        } else if (returns.stream().anyMatch(r -> r.getStatus() == ReturnStatus.REJECTED)) {
+            returnStatus = "REJECTED";
+        }
         return new OrderSummaryResponse(
                 o.getId(),
                 o.getTotalAmount(),
                 o.getStatus().name(),
-                o.getCreatedAt()
+                o.getCreatedAt(),
+                returnStatus
         );
     }
 

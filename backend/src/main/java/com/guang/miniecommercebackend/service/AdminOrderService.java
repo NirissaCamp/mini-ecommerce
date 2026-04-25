@@ -93,10 +93,18 @@ public class AdminOrderService {
         }
         if (newStatus == OrderStatus.SHIPPED) {
             for (OrderItem item : order.getItems()) {
+                //  SHIPPED 时 fulfill
+                //
+                //  订单发货时，才做真实出库：onHand -= qty，同时 allocated -= qty
+                //  这一步才是“货离开仓库”
                 inventoryService.fulfill(item.getProductId(), item.getQuantity(), order.getId());
             }
         } else if (newStatus == OrderStatus.CANCELLED) {
             for (OrderItem item : order.getItems()) {
+                //  CANCELLED 时 deallocate
+                //
+                //  订单取消时，把之前锁住的 allocated 释放回 available
+                //  不应再改 onHand（因为没发货）
                 inventoryService.deallocate(item.getProductId(), item.getQuantity(), order.getId());
             }
         }

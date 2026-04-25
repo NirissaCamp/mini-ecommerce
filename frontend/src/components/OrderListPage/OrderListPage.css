@@ -314,3 +314,39 @@
         text-align: left;
     }
 }
+
+.orders-card__return-hint {
+    margin: 0.65rem 0 0;
+    font-size: 0.82rem;
+    color: #9ca3af;
+    line-height: 1.35;
+}
+
+.orders-filters {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.55rem;
+    margin: 0 0 1.1rem;
+}
+
+.orders-filters__chip {
+    border: 1px solid #e5e7eb;
+    background: #fff;
+    color: #374151;
+    border-radius: 999px;
+    padding: 0.35rem 0.75rem;
+    font-size: 0.83rem;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.orders-filters__chip:hover {
+    border-color: #cbd5e1;
+    background: #f8fafc;
+}
+
+.orders-filters__chip.is-active {
+    background: #232f3e;
+    border-color: #232f3e;
+    color: #fff;
+}

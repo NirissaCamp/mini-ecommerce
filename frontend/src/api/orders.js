@@ -13,8 +13,9 @@ function authHeaders(token) {
     return { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` };
 }
 
-export function listOrders(token){
-    return fetch(ORDERS_BASE, {headers: authHeaders(token)}).then(handleResponse)
+export function listOrders(token, status){
+    const url = status ? `${ORDERS_BASE}?status=${encodeURIComponent(status)}` : ORDERS_BASE
+    return fetch(url, { headers: authHeaders(token) }).then(handleResponse)
 }
 
 export function getOrder(token, orderId){

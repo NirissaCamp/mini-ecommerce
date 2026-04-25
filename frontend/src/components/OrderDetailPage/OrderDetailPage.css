@@ -552,3 +552,51 @@
 .order-detail-items + .order-detail-items {
     margin-top: 1.5rem;
 }
+
+.order-detail__badge--return-requested {
+    background: #fef3c7;
+    color: #b45309;
+    border: 1px solid #fde68a;
+}
+
+.order-detail__badge--return-approved {
+    background: #e0f2fe;
+    color: #0369a1;
+    border: 1px solid #bae6fd;
+}
+
+.order-detail__badge--return-refunded {
+    background: #dcfce7;
+    color: #166534;
+    border: 1px solid #86efac;
+}
+
+.order-detail__badge--return-rejected {
+    background: #fee2e2;
+    color: #b91c1c;
+    border: 1px solid #fecaca;
+}
+
+.order-detail__header-right {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 0.35rem;
+}
+
+.order-detail__header-actions {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    justify-content: flex-end;
+}
+
+.order-detail__status-hint {
+    margin: 0;
+    font-size: 0.82rem;
+    color: #9ca3af;
+    line-height: 1.35;
+    text-align: right;
+    max-width: 20rem;
+}
