@@ -157,6 +157,20 @@
 .aip-table-wrap {
     overflow-x: auto;
 }
+.aip-table-wrap--movements {
+    max-height: 360px;      /* 你可按页面高度改成 360/420/500 */
+    overflow: auto;         /* 同时允许 x/y 滚动 */
+    border: 1px solid #f0f0f0;
+    border-radius: 8px;
+}
+
+/* 让表头在纵向滚动时固定 */
+.aip-table--movements thead th {
+    position: sticky;
+    top: 0;
+    z-index: 1;
+    background: #fff;
+}
 
 .aip-table {
     width: 100%;
@@ -337,3 +351,4 @@
     font-size: 13px;
     color: #555;
 }
+

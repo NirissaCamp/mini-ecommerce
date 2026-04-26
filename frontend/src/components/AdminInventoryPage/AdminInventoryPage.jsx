@@ -19,7 +19,7 @@ function fmtDate(str) {
 
 // ── Receive Stock Form ─────────────────────────────────────────────────────
 
-function ReceiveStockForm({ token, productId, onSuccess }) {
+function ReceiveStockForm({ token, productId, sellingPrice, onSuccess }) {
     const [qty, setQty] = useState('')
     const [unitCost, setUnitCost] = useState('')
     const [note, setNote] = useState('')
@@ -32,11 +32,25 @@ function ReceiveStockForm({ token, productId, onSuccess }) {
             setError('Qty must be a positive number.')
             return
         }
+        if (unitCost === '' || Number.isNaN(Number(unitCost))) {
+            setError('Unit cost is required.')
+            return
+        }
+        if (Number(unitCost) <= 0) {
+            setError('Unit cost must be greater than 0.')
+            return
+        }
+        if (sellingPrice != null && Number(unitCost) > Number(sellingPrice)) {
+            setError('Unit cost cannot exceed selling price.')
+            return
+        }
         setSubmitting(true)
         setError(null)
         try {
-            const body = { qty: Number(qty) }
-            if (unitCost !== '') body.unitCost = Number(unitCost)
+            const body = {
+                qty: Number(qty),
+                unitCost: Number(unitCost),
+            }
             if (note.trim()) body.note = note.trim()
             await adminReceiveStock(token, productId, body)
             setQty('')
@@ -44,7 +58,18 @@ function ReceiveStockForm({ token, productId, onSuccess }) {
             setNote('')
             onSuccess()
         } catch (e) {
-            setError(e.message)
+//             e.status === 401 || e.status === 403
+//             -> 走“登录失效”流程（清 token、弹登录、或跳登录页）
+             if (e.status === 401 || e.status === 403) {
+                 setError('Session expired or permission denied. Please sign in again.')
+                 // 可选：localStorage.removeItem('token')
+                 // 可选：window.location.href = '/'
+             }
+//          其他错误
+//          -> 继续 setError(e.message) 普通提示
+             else {
+                 setError(e.message ?? 'Request failed')
+             }
         } finally {
             setSubmitting(false)
         }
@@ -68,7 +93,7 @@ function ReceiveStockForm({ token, productId, onSuccess }) {
                     />
                 </label>
                 <label className="aip-label">
-                    Unit Cost ($)
+                    Unit Cost ($) *
                     <input
                         className="aip-input"
                         type="number"
@@ -76,7 +101,7 @@ function ReceiveStockForm({ token, productId, onSuccess }) {
                         step="0.01"
                         value={unitCost}
                         onChange={e => setUnitCost(e.target.value)}
-                        placeholder="optional"
+                        placeholder="required"
                     />
                 </label>
             </div>
@@ -125,7 +150,13 @@ function AdjustStockForm({ token, productId, onSuccess }) {
             setReason('')
             onSuccess()
         } catch (e) {
-            setError(e.message)
+            if (e.status === 401 || e.status === 403) {
+                setError('Session expired or permission denied. Please sign in again.')
+                // 可选：localStorage.removeItem('token')
+                // 可选：window.location.href = '/'
+            } else {
+                setError(e.message ?? 'Request failed')
+            }
         } finally {
             setSubmitting(false)
         }
@@ -185,7 +216,13 @@ function MovementsTable({ token, productId }) {
                 const result = await adminGetMovements(token, productId, p, 20)
                 setData(result)
             } catch (e) {
-                setError(e.message)
+                if (e.status === 401 || e.status === 403) {
+                    setError('Session expired or permission denied. Please sign in again.')
+                    // 可选：localStorage.removeItem('token')
+                    // 可选：window.location.href = '/'
+                } else {
+                    setError(e.message ?? 'Request failed')
+                }
             } finally {
                 setLoading(false)
             }
@@ -216,8 +253,8 @@ function MovementsTable({ token, productId }) {
                 <div className="aip-state">No movements recorded.</div>
             ) : (
                 <>
-                    <div className="aip-table-wrap">
-                        <table className="aip-table">
+                    <div className="aip-table-wrap aip-table-wrap--movements">
+                        <table className="aip-table aip-table--movements">
                             <thead>
                                 <tr>
                                     <th>Date</th>
@@ -225,6 +262,8 @@ function MovementsTable({ token, productId }) {
                                     <th className="aip-num">Qty Change</th>
                                     <th className="aip-num">Unit Cost</th>
                                     <th className="aip-num">On Hand After</th>
+                                    <th className="aip-num">Allocated After</th>
+                                    <th className="aip-num">Available After</th>
                                     <th>Reference</th>
                                     <th>Note</th>
                                 </tr>
@@ -247,6 +286,8 @@ function MovementsTable({ token, productId }) {
                                                 : '—'}
                                         </td>
                                         <td className="aip-num">{m.onHandAfter}</td>
+                                        <td className="aip-num">{m.allocatedAfter}</td>
+                                        <td className="aip-num">{m.availableAfter}</td>
                                         <td className="aip-ref">
                                             {m.referenceType ? `${m.referenceType}${m.referenceId ? ' #' + m.referenceId : ''}` : '—'}
                                         </td>
@@ -342,7 +383,13 @@ function DetailPanel({ token, productId, inventory, onStockChanged }) {
             )}
 
             <div className="aip-forms-row">
-                <ReceiveStockForm key={`recv-${productId}-${refreshKey}`} token={token} productId={productId} onSuccess={handleSuccess} />
+                <ReceiveStockForm
+                  key={`recv-${productId}-${refreshKey}`}
+                  token={token}
+                  productId={productId}
+                  sellingPrice={inventory?.sellingPrice}
+                  onSuccess={handleSuccess}
+                />
                 <AdjustStockForm key={`adj-${productId}-${refreshKey}`} token={token} productId={productId} onSuccess={handleSuccess} />
             </div>
 
@@ -406,7 +453,13 @@ function InventoryList({ token, selectedId, onSelect, onItemsLoaded, listRefresh
                 setItems(arr)
                 onItemsLoaded(arr)
             } catch (e) {
-                setError(e.message)
+                if (e.status === 401 || e.status === 403) {
+                    setError('Session expired or permission denied. Please sign in again.')
+                    // 可选：localStorage.removeItem('token')
+                    // 可选：window.location.href = '/'
+                } else {
+                    setError(e.message ?? 'Request failed')
+                }
             } finally {
                 setLoading(false)
             }
@@ -418,6 +471,18 @@ function InventoryList({ token, selectedId, onSelect, onItemsLoaded, listRefresh
         load(keyword, lowStock)
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [listRefreshKey])
+
+    //  items 是当前筛选结果
+    //  selectedId 是右侧详情正在看的商品
+    //  筛选变化后，如果该商品不在 items 里，右侧继续显示会造成“左空右有”的语义冲突
+    //  所以自动清空是最自然的交互。
+    useEffect(() => {
+        if (selectedId == null) return
+        const stillExists = items.some(item => item.productId === selectedId)
+        if (!stillExists) {
+            onSelect(null)
+        }
+    }, [items, selectedId, onSelect])
 
     function handleSearch(e) {
         e.preventDefault()

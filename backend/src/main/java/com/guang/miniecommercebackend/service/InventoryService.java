@@ -94,13 +94,19 @@ public class InventoryService {
     public void receiveStock(Long productId, int qty, BigDecimal unitCost,
                              String note, Long adminId) {
         Inventory inv = getForUpdateOr404(productId);
+        Product product = productRepository.findById(productId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,
+                        "product not found: " + productId));
+
+        if (product.getPrice() != null && unitCost.compareTo(product.getPrice()) > 0) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+                    "Unit cost cannot exceed selling price.");
+        }
         inv.setOnHandQty(inv.getOnHandQty() + qty);
         inv.setAvailableQty(inv.getAvailableQty() + qty);
         inventoryRepository.save(inv);
-        productRepository.findById(productId).ifPresent(p -> {
-            p.setCostPrice(unitCost);
-            productRepository.save(p);
-        });
+        product.setCostPrice(unitCost);
+        productRepository.save(product);
         syncProductStock(productId, inv.getAvailableQty());
         appendMovement(productId, MovementType.RECEIVE, qty, unitCost,
                 inv.getOnHandQty(), inv.getAllocatedQty(), inv.getAvailableQty(),

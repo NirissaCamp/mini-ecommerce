@@ -19,7 +19,10 @@ async function handleResponse(res) {
                 : typeof data === 'string'
                     ? data
                     : `${res.status} ${res.statusText}`
-        throw new Error(msg)
+        const err = new Error(msg)
+        err.status = res.status      // 关键：把 HTTP 状态码挂到错误对象上
+        err.payload = data           // 可选：保留后端完整返回，便于调试
+        throw err
     }
     return data
 }
