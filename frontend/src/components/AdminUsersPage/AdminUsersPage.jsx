@@ -328,6 +328,14 @@ function UserDetailSection({ token, userPermissions = [], isSuperAdmin = false }
     const adminUsers  = users.filter(u => u.roles?.some(r => adminRoleNames.has(r)));
     const regularUsers = users.filter(u => !u.roles?.some(r => adminRoleNames.has(r)));
 
+//  列表里已经搜不到当前这个人时，右侧详情应该关掉
+    useEffect(() => {
+        if (selected == null) return
+        const stillExists = users.some(u => u.id === selected.id)
+        if (!stillExists) {
+            setSelected(null)
+        }
+    }, [users, selected])
     return (
         <>
             <ErrorBanner message={actionError} onClose={() => setActionError('')} />
