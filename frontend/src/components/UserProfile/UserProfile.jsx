@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import { Link } from 'react-router-dom'
 import { getMe } from '../../api/auth'
 import { listAddresses, addAddress, updateAddress, deleteAddress, setDefaultAddress } from '../../api/addresses'
 import {getProfile, updateProfile, changePassword} from "../../api/userProfile.js";
@@ -98,10 +99,9 @@ export default function UserProfile({ onMessage }) {
                             </h2>
                             <ul className="profile-links">
                                 <li>
-                                    <a className="profile-links__item" href="#" onClick={(e) => e.preventDefault()}>
+                                    <Link className="profile-links__item" to="/orders">
                                         <span className="profile-links__label">My orders</span>
-                                        <span className="profile-links__hint">Coming soon</span>
-                                    </a>
+                                    </Link>
                                 </li>
                                 <li>
                                     <AddressSection/>
